@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <title>DORK</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ cache_bust }}">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo dork-logo" title="DORK">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:30px;height:30px">
+                <!-- Wobbly accretion disk / black hole swirl -->
+                <ellipse cx="20" cy="21" rx="16" ry="5" stroke="var(--accent)" stroke-width="1.2" opacity="0.3" transform="rotate(-8 20 21)"/>
+                <ellipse cx="20" cy="20" rx="13" ry="4" stroke="var(--accent-bright)" stroke-width="1.5" opacity="0.5" transform="rotate(5 20 20)"/>
+                <ellipse cx="20" cy="19" rx="10" ry="3" stroke="white" stroke-width="1" opacity="0.2" transform="rotate(-3 20 19)"/>
+                <!-- Black hole center -->
+                <circle cx="20" cy="20" r="7" fill="#030308" stroke="var(--accent)" stroke-width="1.5"/>
+                <circle cx="20" cy="20" r="4" fill="var(--accent-glow-strong)"/>
+                <!-- Googly eyes (asymmetric dork) -->
+                <circle cx="17" cy="18" r="3" fill="white"/>
+                <circle cx="24" cy="17" r="2.2" fill="white"/>
+                <circle cx="17.8" cy="17.5" r="1.5" fill="#030308"/>
+                <circle cx="24.5" cy="16.5" r="1.1" fill="#030308"/>
+                <!-- Tiny highlight dots -->
+                <circle cx="16.8" cy="17" r="0.5" fill="white"/>
+                <circle cx="24" cy="16" r="0.4" fill="white"/>
+                <!-- Goofy lil grin -->
+                <path d="M17 23 Q20 26 24 22.5" stroke="var(--accent-bright)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                <!-- Spastic energy lines -->
+                <line x1="5" y1="12" x2="8" y2="14" stroke="var(--accent)" stroke-width="0.8" opacity="0.5"/>
+                <line x1="33" y1="10" x2="30" y2="13" stroke="var(--accent-3)" stroke-width="0.8" opacity="0.5"/>
+                <line x1="7" y1="28" x2="10" y2="26" stroke="var(--accent-2)" stroke-width="0.8" opacity="0.4"/>
+                <line x1="32" y1="27" x2="29" y2="25" stroke="var(--accent)" stroke-width="0.8" opacity="0.4"/>
+                <circle cx="6" cy="8" r="0.8" fill="var(--accent-bright)" opacity="0.6"/>
+                <circle cx="35" cy="30" r="0.6" fill="var(--accent-3)" opacity="0.5"/>
+            </svg>
+        </div>
+        <div class="sidebar-nav">
+            <button class="nav-btn active" data-panel="chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span class="tooltip">Chat</span>
+            </button>
+            <button class="nav-btn" data-panel="imagine">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                <span class="tooltip">Imagine</span>
+            </button>
+            <button class="nav-btn" data-panel="video">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                <span class="tooltip">Video</span>
+            </button>
+            <button class="nav-btn" data-panel="voice">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span class="tooltip">Voice</span>
+            </button>
+            <button class="nav-btn" data-panel="code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span class="tooltip">Code</span>
+            </button>
+            <div class="nav-sep"></div>
+            <button class="nav-btn" data-panel="artifacts">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span class="tooltip">Artifacts</span>
+            </button>
+            <button class="nav-btn" data-panel="skills">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span class="tooltip">Skills</span>
+            </button>
+            <button class="nav-btn" data-panel="collections">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <span class="tooltip">Collections</span>
+            </button>
+        </div>
+        <div class="sidebar-bottom">
+            <button class="nav-btn" data-panel="settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span class="tooltip">Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="main-panels">
+
+        <!-- Chat -->
+        <div id="panel-chat" class="panel active">
+            <div class="panel-header">
+                <div class="panel-title">Chat</div>
+                <div class="header-spacer"></div>
+                <select id="chat-collection" class="model-select" title="Collection"><option value="">No Collection</option></select>
+                <select id="chat-model" class="model-select">
+                    <option value="grok-4.20-beta-0309-non-reasoning">Grok 4.20 — $2/$6</option>
+                    <option value="grok-4.20-beta-0309-reasoning">Grok 4.20 Reasoning — $2/$6</option>
+                    <option value="grok-4.20-multi-agent-beta-0309">Grok 4.20 Multi-Agent — $2/$6</option>
+                    <option value="grok-4-1-fast-non-reasoning">Grok 4.1 Fast — $0.20/$0.50</option>
+                    <option value="grok-4-1-fast-reasoning">Grok 4.1 Fast Reasoning — $0.20/$0.50</option>
+                    <option value="grok-code-fast-1">Grok Code Fast — $0.20/$1.50</option>
+                </select>
+            </div>
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <div class="welcome">
+                        <div class="welcome-icon dork-welcome">
+                            <svg viewBox="0 0 64 64" fill="none" style="width:64px;height:64px">
+                                <!-- Big wobbly accretion disk -->
+                                <ellipse cx="32" cy="34" rx="28" ry="8" stroke="var(--accent)" stroke-width="1" opacity="0.2" transform="rotate(-6 32 34)"/>
+                                <ellipse cx="32" cy="32" rx="24" ry="7" stroke="var(--accent-bright)" stroke-width="1.5" opacity="0.35" transform="rotate(4 32 32)"/>
+                                <ellipse cx="32" cy="31" rx="18" ry="5" stroke="white" stroke-width="0.8" opacity="0.15" transform="rotate(-3 32 31)"/>
+                                <!-- Black hole -->
+                                <circle cx="32" cy="32" r="12" fill="#030308" stroke="var(--accent)" stroke-width="2"/>
+                                <circle cx="32" cy="32" r="7" fill="var(--accent-glow-strong)"/>
+                                <!-- Big googly eyes -->
+                                <circle cx="27" cy="29" r="5" fill="white"/>
+                                <circle cx="38" cy="28" r="3.8" fill="white"/>
+                                <circle cx="28.2" cy="28.2" r="2.5" fill="#030308"/>
+                                <circle cx="39" cy="27" r="1.9" fill="#030308"/>
+                                <circle cx="27" cy="27.5" r="0.9" fill="white"/>
+                                <circle cx="38.2" cy="26.2" r="0.7" fill="white"/>
+                                <!-- Goofy grin -->
+                                <path d="M27 37 Q32 42 38 36" stroke="var(--accent-bright)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                                <!-- Spastic sparkles -->
+                                <circle cx="8" cy="12" r="1.2" fill="var(--accent-bright)" opacity="0.6"><animate attributeName="opacity" values="0.6;0.1;0.6" dur="2s" repeatCount="indefinite"/></circle>
+                                <circle cx="56" cy="16" r="1" fill="var(--accent-3)" opacity="0.5"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="1.7s" repeatCount="indefinite"/></circle>
+                                <circle cx="10" cy="50" r="0.8" fill="var(--accent-2)" opacity="0.4"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="2.3s" repeatCount="indefinite"/></circle>
+                                <circle cx="54" cy="48" r="1.1" fill="var(--accent)" opacity="0.5"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="1.9s" repeatCount="indefinite"/></circle>
+                                <!-- Energy lines -->
+                                <line x1="6" y1="20" x2="12" y2="24" stroke="var(--accent)" stroke-width="0.8" opacity="0.3"/>
+                                <line x1="52" y1="18" x2="48" y2="22" stroke="var(--accent-3)" stroke-width="0.8" opacity="0.3"/>
+                                <line x1="8" y1="42" x2="14" y2="39" stroke="var(--accent-2)" stroke-width="0.8" opacity="0.3"/>
+                                <line x1="54" y1="42" x2="48" y2="39" stroke="var(--accent)" stroke-width="0.8" opacity="0.3"/>
+                            </svg>
+                        </div>
+                        <h2>DORK</h2>
+                        <p>Chat, create, code, imagine, and build — powered by xAI.</p>
+                        <div class="shortcuts-hint">
+                            <span><kbd>&#8984;K</kbd> Focus</span>
+                            <span><kbd>&#8984;1-8</kbd> Tabs</span>
+                            <span><kbd>Esc</kbd> Close</span>
+                        </div>
+                        <div class="shortcuts-hint" style="margin-top:4px">
+                            <span><kbd>/imagine</kbd> Generate image</span>
+                            <span><kbd>/video</kbd> Generate video</span>
+                            <span><kbd>/code</kbd> Write code</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="chat-attachments" class="chat-attachments"></div>
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <button id="chat-upload-btn" class="upload-btn" title="Attach files">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                        </button>
+                        <input type="file" id="chat-file-input" multiple accept="image/*,.txt,.md,.py,.js,.ts,.jsx,.tsx,.json,.csv,.html,.css,.xml,.yaml,.yml,.toml,.sh,.sql,.rs,.go,.java,.c,.cpp,.h,.rb,.php,.swift,.kt" style="display:none">
+                        <textarea id="chat-input" class="chat-input" placeholder="Ask anything... /imagine /video /code" rows="1"></textarea>
+                        <button id="chat-send" class="send-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </div>
+                    <div class="chat-controls">
+                        <button id="chat-system" class="chat-control-btn">System Prompt</button>
+                        <button id="chat-clear" class="chat-control-btn">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Imagine -->
+        <div id="panel-imagine" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Imagine</div>
+                <div class="header-spacer"></div>
+                <select id="imagine-model" class="model-select">
+                    <option value="grok-imagine-image">Imagine — $0.02</option>
+                    <option value="grok-imagine-image-pro">Imagine Pro — $0.07</option>
+                </select>
+            </div>
+            <div class="split-layout">
+                <div class="split-controls">
+                    <div class="field-group">
+                        <label>Prompt</label>
+                        <textarea id="imagine-prompt" class="voice-textarea" style="min-height:90px" placeholder="Describe the image..."></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label>Source Image (optional)</label>
+                        <div id="imagine-source-preview"></div>
+                        <div id="imagine-drop" class="drop-zone">
+                            <p>Drop image or click to upload</p>
+                            <div class="hint">For image-to-image editing</div>
+                        </div>
+                        <input type="file" id="imagine-file" accept="image/*" style="display:none">
+                    </div>
+                    <button id="imagine-generate" class="btn btn-primary btn-full btn-lg">Generate</button>
+                </div>
+                <div class="split-canvas">
+                    <div id="imagine-preview" class="split-preview">
+                        <div class="placeholder-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                            <p>Generated images appear here</p>
+                        </div>
+                    </div>
+                    <div id="imagine-gallery" class="split-gallery"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video -->
+        <div id="panel-video" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Video</div>
+                <span class="panel-subtitle">grok-imagine-video — $0.05/s</span>
+                <div class="header-spacer"></div>
+                <div id="video-status"></div>
+            </div>
+            <div class="split-layout">
+                <div class="split-controls">
+                    <div class="field-group">
+                        <label>Source Image (optional)</label>
+                        <div id="video-source-preview"></div>
+                        <div id="video-drop" class="drop-zone">
+                            <p>Drop image or click to upload</p>
+                            <div class="hint">For image-to-video</div>
+                        </div>
+                        <input type="file" id="video-file" accept="image/*" style="display:none">
+                    </div>
+                    <div class="field-group">
+                        <label>Or pick from gallery</label>
+                        <div id="video-image-picker" class="video-image-picker"></div>
+                    </div>
+                    <div class="field-group">
+                        <label>Prompt</label>
+                        <textarea id="video-prompt" class="voice-textarea" style="min-height:90px" placeholder="Describe the video..."></textarea>
+                    </div>
+                    <button id="video-generate" class="btn btn-primary btn-full btn-lg">Generate Video</button>
+                </div>
+                <div class="split-canvas">
+                    <div id="video-preview" class="split-preview">
+                        <div class="placeholder-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            <p>Generated videos appear here</p>
+                        </div>
+                    </div>
+                    <div class="gallery-wrapper">
+                        <div id="video-gallery" class="split-gallery"></div>
+                        <div id="video-gallery-actions"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice -->
+        <div id="panel-voice" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Voice</div>
+                <span class="panel-subtitle" id="voice-pricing">xAI TTS — $4.20/1M chars</span>
+                <div class="header-spacer"></div>
+                <div class="voice-mode-tabs">
+                    <button class="chat-control-btn active" data-voice-mode="tts" onclick="switchVoiceMode('tts')">TTS</button>
+                    <button class="chat-control-btn" data-voice-mode="agent" onclick="switchVoiceMode('agent')">Voice Agent</button>
+                </div>
+            </div>
+
+            <!-- TTS Mode -->
+            <div id="voice-tts" class="voice-layout">
+                <div class="voice-card">
+                    <div class="field-group">
+                        <label>Text</label>
+                        <textarea id="voice-text" class="voice-textarea" placeholder="Enter text to speak... (Ctrl+Enter)&#10;&#10;Speech tags: [laugh] [pause] &lt;whisper&gt;text&lt;/whisper&gt; &lt;slow&gt;text&lt;/slow&gt;"></textarea>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>Voice</label>
+                            <select id="voice-select">
+                                <option value="eve">Eve</option>
+                                <option value="ara">Ara</option>
+                                <option value="rex">Rex</option>
+                                <option value="sal">Sal</option>
+                                <option value="leo">Leo</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Language</label>
+                            <select id="voice-lang">
+                                <option value="en">English</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ko">Korean</option>
+                                <option value="de">German</option>
+                                <option value="fr">French</option>
+                                <option value="es">Spanish</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ru">Russian</option>
+                                <option value="it">Italian</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="voice-speak" class="btn btn-primary btn-full btn-lg">Speak</button>
+                </div>
+                <div id="voice-history" class="voice-history"></div>
+            </div>
+
+            <!-- Voice Agent Mode -->
+            <div id="voice-agent" class="voice-layout" style="display:none">
+                <div class="voice-card" style="text-align:center">
+                    <div id="agent-status" style="font-family:var(--font-display);font-size:14px;color:var(--text-muted);margin-bottom:8px">Ready to connect</div>
+                    <div id="agent-viz" class="agent-viz">
+                        <div class="agent-orb" id="agent-orb"></div>
+                    </div>
+                    <div class="field-row" style="margin-bottom:12px">
+                        <div class="field-group">
+                            <label>Voice</label>
+                            <select id="agent-voice">
+                                <option value="Eve">Eve</option>
+                                <option value="Ara">Ara</option>
+                                <option value="Rex">Rex</option>
+                                <option value="Sal">Sal</option>
+                                <option value="Leo">Leo</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Instructions</label>
+                            <input type="text" id="agent-instructions" value="You are a helpful assistant." placeholder="System instructions...">
+                        </div>
+                    </div>
+                    <button id="agent-toggle" class="btn btn-primary btn-lg btn-full" onclick="toggleVoiceAgent()">Start Conversation</button>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:8px">$0.05/min &bull; Speak or type</div>
+                </div>
+                <div id="agent-transcript" class="voice-history"></div>
+                <div id="agent-text-input" class="agent-text-input" style="display:none">
+                    <input type="text" id="agent-text-field" placeholder="Type a message... (Enter to send)" autocomplete="off">
+                    <button class="btn btn-primary btn-sm" onclick="sendAgentText()">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code -->
+        <div id="panel-code" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Code</div>
+                <div class="header-spacer"></div>
+                <select id="code-collection" class="model-select" title="Collection"><option value="">No Collection</option></select>
+                <select id="code-model" class="model-select">
+                    <option value="grok-code-fast-1">Grok Code Fast — $0.20/$1.50</option>
+                    <option value="grok-4.20-beta-0309-non-reasoning">Grok 4.20 — $2/$6</option>
+                    <option value="grok-4.20-beta-0309-reasoning">Grok 4.20 Reasoning — $2/$6</option>
+                    <option value="grok-4.20-multi-agent-beta-0309">Grok 4.20 Multi-Agent — $2/$6</option>
+                    <option value="grok-4-1-fast-non-reasoning">Grok 4.1 Fast — $0.20/$0.50</option>
+                    <option value="grok-4-1-fast-reasoning">Grok 4.1 Fast Reasoning — $0.20/$0.50</option>
+                </select>
+                <button id="code-clear" class="btn btn-ghost btn-sm">Clear</button>
+            </div>
+            <div class="code-layout">
+                <div class="code-editor-area">
+                    <textarea id="code-editor" class="code-editor" placeholder="Paste code here for context (optional)..."></textarea>
+                    <div id="code-attachments" class="chat-attachments"></div>
+                    <div class="code-input-bar">
+                        <button id="code-upload-btn" class="upload-btn" title="Attach files">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                        </button>
+                        <input type="file" id="code-file-input" multiple accept="image/*,.txt,.md,.py,.js,.ts,.jsx,.tsx,.json,.csv,.html,.css,.xml,.yaml,.yml,.toml,.sh,.sql,.rs,.go,.java,.c,.cpp,.h,.rb,.php,.swift,.kt,.log,.env,.cfg,.ini,.dockerfile,.makefile" style="display:none">
+                        <input id="code-input" class="code-input" type="text" placeholder="Ask about code, request implementations, debug...">
+                        <button id="code-send" class="send-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="code-messages" class="code-response chat-messages">
+                    <div class="welcome" style="padding:40px">
+                        <h2 style="font-size:15px">Code Assistant</h2>
+                        <p style="font-size:12px">Paste code for context, then ask below.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artifacts -->
+        <div id="panel-artifacts" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Artifacts</div>
+                <span class="panel-subtitle">Saved live previews</span>
+            </div>
+            <div class="grid-layout">
+                <div id="artifacts-grid" class="grid-cards">
+                    <div class="grid-empty">No artifacts saved yet. Generate code in Chat or Code, then click "Preview" to render and save.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div id="panel-skills" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Skills</div>
+                <span class="panel-subtitle">Build &amp; save to collections</span>
+                <div class="header-spacer"></div>
+                <button id="skills-new" class="btn btn-primary btn-sm">New Skill</button>
+            </div>
+            <div class="grid-layout">
+                <div id="skills-grid" class="grid-cards">
+                    <div class="grid-empty">No skills yet. Click "New Skill" to create one.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collections -->
+        <div id="panel-collections" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Collections</div>
+                <div class="header-spacer"></div>
+                <button id="collections-create" class="btn btn-primary btn-sm">New Collection</button>
+            </div>
+            <div class="grid-layout">
+                <div id="collections-grid" class="grid-cards">
+                    <div class="grid-empty">No collections yet.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="panel-settings" class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Settings</div>
+            </div>
+            <div class="settings-layout">
+                <div class="settings-section">
+                    <div class="settings-title">API Configuration</div>
+                    <div class="settings-subtitle">Your xAI API key is stored locally at ~/.dork/ and only sent to api.x.ai</div>
+                    <div class="field-group" style="margin-bottom:14px">
+                        <label>xAI API Key</label>
+                        <input type="password" id="settings-key" placeholder="xai-...">
+                    </div>
+                    <button id="settings-save" class="btn btn-primary">Save</button>
+                </div>
+                <div class="divider"></div>
+                <div class="settings-section" style="margin-top:20px">
+                    <div class="settings-title">Models</div>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:12.5px;color:var(--text-secondary)">
+                        <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-fast">fast</span> Grok 4.20 — 2M ctx</div>
+                        <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-reasoning">reason</span> Grok 4.20 Reasoning — 2M ctx</div>
+                        <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-multi-agent">agent</span> Grok 4.20 Multi-Agent — 2M ctx</div>
+                        <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-code">code</span> Grok Code Fast — 256K ctx</div>
+                        <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-fast">fast</span> Grok 4.1 Fast — $0.20/$0.50</div>
+                        <div class="divider" style="margin:6px 0"></div>
+                        <div>Imagine ($0.02) &amp; Imagine Pro ($0.07) &bull; Video ($0.05/s) &bull; TTS ($4.20/1M chars) &bull; Realtime ($0.05/min)</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="settings-section" style="margin-top:20px">
+                    <div class="settings-title">Keyboard Shortcuts</div>
+                    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;color:var(--text-secondary);margin-top:10px">
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">&#8984;1-8</kbd> <span>Switch tabs</span>
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">&#8984;K</kbd> <span>Focus chat</span>
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">Esc</kbd> <span>Close panel/modal</span>
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">Enter</kbd> <span>Send message</span>
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">Ctrl+Enter</kbd> <span>Speak (TTS)</span>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="settings-section" style="margin-top:20px">
+                    <div class="settings-title">Data</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:2">
+                        ~/Desktop/Dork/{Images,Videos,Audio,Artifacts,Skills}<br>
+                        ~/.dork/settings.json
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      </div>
+
+      <!-- Artifact Preview Panel -->
+      <div id="artifact-panel" class="artifact-panel">
+          <div class="artifact-header">
+              <div class="artifact-title" id="artifact-title">Live Preview</div>
+              <button class="btn btn-sm btn-primary" onclick="saveCurrentArtifact()">Save</button>
+              <button class="btn btn-sm btn-secondary" onclick="launchArtifact()">Launch</button>
+              <button class="btn btn-sm btn-ghost" onclick="closeArtifactPanel()">Close</button>
+          </div>
+          <iframe id="artifact-frame" class="artifact-frame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+      </div>
+    </main>
+</div>
+
+<!-- Skill Editor (modal) -->
+<div id="skill-editor-overlay" class="skill-editor-overlay" style="display:none">
+    <div class="skill-editor">
+        <div class="skill-editor-header">
+            <h3 id="skill-editor-title">New Skill</h3>
+            <button class="btn btn-ghost btn-sm" onclick="closeSkillEditor()">Cancel</button>
+        </div>
+        <div class="skill-editor-body">
+            <div class="field-group">
+                <label>Name</label>
+                <input type="text" id="skill-name" placeholder="my-skill">
+            </div>
+            <div class="field-group">
+                <label>Description</label>
+                <input type="text" id="skill-description" placeholder="What does this skill do?">
+            </div>
+            <div class="field-row">
+                <div class="field-group">
+                    <label>Type</label>
+                    <select id="skill-type">
+                        <option value="instruction">Instruction</option>
+                        <option value="template">Template</option>
+                        <option value="workflow">Workflow</option>
+                        <option value="prompt">Prompt</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Upload to Collection</label>
+                    <select id="skill-collection"><option value="">None (local only)</option></select>
+                </div>
+            </div>
+            <div class="field-group">
+                <label>Content (Markdown)</label>
+                <textarea id="skill-content" class="skill-content-editor" placeholder="# My Skill&#10;&#10;Write the skill content here, or click AI Generate below..."></textarea>
+            </div>
+        </div>
+        <div class="skill-editor-footer">
+            <button class="btn btn-ghost" id="skill-ai-generate" onclick="aiGenerateSkill()">AI Generate</button>
+            <button class="btn btn-primary" onclick="saveSkill()">Save Skill</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+<script src="/static/js/app.js?v={{ cache_bust }}"></script>
+</body>
+</html>
