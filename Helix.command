@@ -5,7 +5,7 @@
 
 cd "$(dirname "$0")"
 
-PORT=5080
+PORT=5081
 APP_URL="http://127.0.0.1:${PORT}"
 
 # Load .env
@@ -21,7 +21,7 @@ if [ ! -d "venv" ]; then
     echo "  Setting up environment..."
     python3 -m venv venv
     source venv/bin/activate
-    pip install -q -r dork/requirements.txt
+    pip install -q -r helix/requirements.txt
 else
     source venv/bin/activate
 fi
@@ -42,4 +42,4 @@ echo "  ⬡ HELIX"
 echo "  → ${APP_URL}"
 echo ""
 
-python3 dork/app/dashboard.py
+python3 helix/app/dashboard.py

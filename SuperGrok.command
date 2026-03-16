@@ -5,7 +5,7 @@
 
 cd "$(dirname "$0")"
 
-PORT=5080
+PORT=5083
 APP_URL="http://127.0.0.1:${PORT}"
 
 # ── Load .env if present ──────────────────────────────────────────────────
@@ -21,7 +21,7 @@ if [ ! -d "venv" ]; then
     echo "  Creating virtual environment..."
     python3 -m venv venv
     source venv/bin/activate
-    pip install -q -r dork/requirements.txt
+    pip install -q -r supergrok/requirements.txt
 else
     source venv/bin/activate
 fi
@@ -43,4 +43,4 @@ echo "  ⚡ SuperGrok Creator"
 echo "  → ${APP_URL}"
 echo ""
 
-python3 dork/app/dashboard.py
+python3 supergrok/app/dashboard.py
