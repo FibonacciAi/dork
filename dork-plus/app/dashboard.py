@@ -1310,6 +1310,10 @@ def api_delete():
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("\n  \033[38;5;141m◆\033[0m DORK+")
-    print(f"  → http://127.0.0.1:5085\n")
-    app.run(host="127.0.0.1", port=5085, debug=False)
+    import getpass, hashlib
+    _base_port = 5085
+    _user_offset = int(hashlib.md5(getpass.getuser().encode()).hexdigest(), 16) % 100
+    _port = _base_port + _user_offset
+    print(f"\n  \033[38;5;141m◆\033[0m DORK+")
+    print(f"  → http://127.0.0.1:{_port}\n")
+    app.run(host="127.0.0.1", port=_port, debug=False)

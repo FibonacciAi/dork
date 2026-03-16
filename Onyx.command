@@ -5,7 +5,9 @@
 
 cd "$(dirname "$0")"
 
-PORT=5082
+BASE_PORT=5082
+USER_OFFSET=$(python3 -c "import getpass,hashlib;print(int(hashlib.md5(getpass.getuser().encode()).hexdigest(),16)%100)")
+PORT=$((BASE_PORT + USER_OFFSET))
 APP_URL="http://127.0.0.1:${PORT}"
 
 # Load .env
