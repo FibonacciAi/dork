@@ -21,7 +21,7 @@ if [ ! -d "venv" ]; then
     echo "  Setting up environment..."
     python3 -m venv venv
     source venv/bin/activate
-    pip install -q -r requirements.txt
+    pip install -q -r dork/requirements.txt
 else
     source venv/bin/activate
 fi
@@ -42,4 +42,4 @@ echo "  ◆ ONYX"
 echo "  → ${APP_URL}"
 echo ""
 
-python3 app/dashboard.py
+python3 dork/app/dashboard.py

@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCode();
     setupArtifacts();
     setupSkills();
+    setupLibrary();
     setupCollections();
     setupSettings();
     setupKeyboardShortcuts();
@@ -2153,6 +2154,145 @@ async function deleteSkill(filename) {
     } catch {}
 }
 
+// ── Library ──────────────────────────────────────────────────────────────────
+const libraryState = {
+    selectMode: false,
+    selected: new Set(),
+    images: [],
+};
+
+function setupLibrary() {
+    loadLibrary();
+}
+
+async function loadLibrary() {
+    try {
+        const resp = await fetch('/api/image/list');
+        const data = await resp.json();
+        libraryState.images = data.images || [];
+        refreshLibraryGrid();
+    } catch {}
+}
+
+function refreshLibraryGrid() {
+    const grid = document.getElementById('library-grid');
+    const countEl = document.getElementById('library-count');
+    if (countEl) countEl.textContent = libraryState.images.length ? `${libraryState.images.length} images` : '';
+
+    if (!libraryState.images.length) {
+        grid.innerHTML = '<div class="grid-empty">No images yet. Generate images in Imagine or Chat.</div>';
+        return;
+    }
+    grid.innerHTML = libraryState.images.map(img => {
+        const isSelected = libraryState.selected.has(img.filename);
+        return `<div class="library-item ${isSelected ? 'selected' : ''} ${libraryState.selectMode ? 'select-mode' : ''}" onclick="${libraryState.selectMode ? `toggleLibraryItem('${img.filename}')` : `window.open('${img.url}','_blank')`}">
+            <img src="${img.url}" loading="lazy">
+            <button class="library-delete-x" onclick="event.stopPropagation();deleteLibraryImage('${img.filename}')" title="Delete">&times;</button>
+            ${isSelected ? '<div class="library-check">&#10003;</div>' : ''}
+            <div class="library-item-name">${img.filename}</div>
+        </div>`;
+    }).join('');
+}
+
+async function deleteLibraryImage(filename) {
+    try {
+        await fetch('/api/image/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename }),
+        });
+        libraryState.images = libraryState.images.filter(i => i.filename !== filename);
+        libraryState.selected.delete(filename);
+        refreshLibraryGrid();
+        // Sync imagine gallery and video picker
+        state.imagineImages = state.imagineImages.filter(i => i.filename !== filename);
+        refreshImagineGallery();
+        refreshVideoImagePicker();
+        toast('Deleted', 'success');
+    } catch (err) { toast(err.message || 'Delete failed', 'error'); }
+}
+
+function toggleLibrarySelect() {
+    libraryState.selectMode = !libraryState.selectMode;
+    libraryState.selected.clear();
+    const toolbar = document.getElementById('library-toolbar');
+    const selectBtn = document.getElementById('library-select-btn');
+    toolbar.style.display = libraryState.selectMode ? 'flex' : 'none';
+    selectBtn.textContent = libraryState.selectMode ? 'Done' : 'Select';
+    updateLibrarySelectedCount();
+    refreshLibraryGrid();
+}
+
+function toggleLibraryItem(filename) {
+    if (libraryState.selected.has(filename)) {
+        libraryState.selected.delete(filename);
+    } else {
+        libraryState.selected.add(filename);
+    }
+    updateLibrarySelectedCount();
+    refreshLibraryGrid();
+}
+
+function updateLibrarySelectedCount() {
+    const el = document.getElementById('library-selected-count');
+    if (el) el.textContent = `${libraryState.selected.size} selected`;
+}
+
+async function deleteSelectedLibrary() {
+    if (!libraryState.selected.size) return;
+    if (!confirm(`Delete ${libraryState.selected.size} images?`)) return;
+    const toDelete = [...libraryState.selected];
+    for (const filename of toDelete) {
+        try {
+            await fetch('/api/image/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename }),
+            });
+        } catch {}
+    }
+    libraryState.images = libraryState.images.filter(i => !libraryState.selected.has(i.filename));
+    libraryState.selected.clear();
+    libraryState.selectMode = false;
+    document.getElementById('library-toolbar').style.display = 'none';
+    document.getElementById('library-select-btn').textContent = 'Select';
+    refreshLibraryGrid();
+    // Reload imagine gallery from server to stay in sync
+    try {
+        const resp = await fetch('/api/image/list');
+        const data = await resp.json();
+        state.imagineImages = data.images || [];
+    } catch {}
+    refreshImagineGallery();
+    refreshVideoImagePicker();
+    toast('Deleted', 'success');
+}
+
+async function clearAllLibrary() {
+    if (!libraryState.images.length) return;
+    if (!confirm(`Delete all ${libraryState.images.length} images?`)) return;
+    for (const img of libraryState.images) {
+        try {
+            await fetch('/api/image/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: img.filename }),
+            });
+        } catch {}
+    }
+    libraryState.images = [];
+    libraryState.selected.clear();
+    libraryState.selectMode = false;
+    document.getElementById('library-toolbar').style.display = 'none';
+    document.getElementById('library-select-btn').textContent = 'Select';
+    refreshLibraryGrid();
+    state.imagineImages = [];
+    state.imagineSelected = null;
+    refreshImagineGallery();
+    refreshVideoImagePicker();
+    toast('All images cleared', 'success');
+}
+
 // ── Collections ──────────────────────────────────────────────────────────────
 function setupCollections() {
     document.getElementById('collections-create').addEventListener('click', createCollection);
@@ -2245,6 +2385,9 @@ async function loadGalleries() {
         refreshVideoGallery();
         refreshVoiceHistory();
         refreshVideoImagePicker();
+        // Sync library
+        libraryState.images = id.images || [];
+        refreshLibraryGrid();
     } catch {}
 }
 
@@ -2314,10 +2457,10 @@ function setupKeyboardShortcuts() {
 
         const cmd = e.metaKey || e.ctrlKey;
 
-        // Cmd+1-8 switch tabs
-        if (cmd && e.key >= '1' && e.key <= '8') {
+        // Cmd+1-9 switch tabs
+        if (cmd && e.key >= '1' && e.key <= '9') {
             e.preventDefault();
-            const panels = ['chat', 'imagine', 'video', 'voice', 'code', 'artifacts', 'skills', 'collections'];
+            const panels = ['chat', 'imagine', 'video', 'voice', 'code', 'artifacts', 'skills', 'library', 'collections'];
             const idx = parseInt(e.key) - 1;
             if (panels[idx]) switchPanel(panels[idx]);
             return;
@@ -2331,8 +2474,12 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // Escape close artifact panel
+        // Escape close overlays (code preview first, then artifact panel, then skill editor)
         if (e.key === 'Escape') {
+            if (document.querySelector('.code-preview-overlay')) {
+                closeCodePreview();
+                return;
+            }
             if (document.getElementById('artifact-panel').classList.contains('open')) {
                 closeArtifactPanel();
             }
@@ -2350,7 +2497,20 @@ function renderMarkdown(text) {
     let html = escapeHtml(text);
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
         const id = 'code-' + Math.random().toString(36).slice(2, 8);
-        return `<pre><div class="code-header"><span class="code-lang">${lang || 'code'}</span><button class="code-copy-btn" onclick="copyCodeBlock('${id}')" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div><code id="${id}" class="language-${lang}">${code.trim()}</code></pre>`;
+        const trimmed = code.trim();
+        const lineCount = trimmed.split('\n').length;
+        const isCollapsible = lineCount > 15;
+        const isHtml = (lang || '').toLowerCase() === 'html' && (
+            trimmed.includes('&lt;!DOCTYPE') || trimmed.includes('&lt;!doctype') ||
+            trimmed.includes('&lt;html') || trimmed.includes('&lt;body') ||
+            (trimmed.includes('&lt;div') && trimmed.includes('&lt;style'))
+        );
+        const previewBtn = isHtml ? `<button class="code-action-btn preview-btn" onclick="previewCodeBlock('${id}')" title="Preview HTML"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Preview</button>` : '';
+        const saveBtn = isHtml ? `<button class="code-action-btn save-btn" onclick="saveCodeBlockAsArtifact('${id}')" title="Save as Artifact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Save</button>` : '';
+        const collapseClass = isCollapsible ? ' code-collapsible collapsed' : '';
+        const toggleBtn = isCollapsible ? `<button class="code-toggle-btn" onclick="toggleCodeBlock(this)">Show full code (${lineCount} lines)</button>` : '';
+        const fadeDiv = isCollapsible ? '<div class="code-fade"></div>' : '';
+        return `<pre${collapseClass ? ` class="${collapseClass.trim()}"` : ''}><div class="code-header"><span class="code-lang">${lang || 'code'}</span><span class="code-line-count">${lineCount} lines</span><div class="code-header-btns"><button class="code-copy-btn" onclick="copyCodeBlock('${id}')" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>${previewBtn}${saveBtn}</div></div><code id="${id}" class="language-${lang}">${trimmed}</code>${fadeDiv}</pre>${toggleBtn}`;
     });
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -2380,6 +2540,118 @@ function copyCodeBlock(id) {
         const btn = el.closest('pre').querySelector('.code-copy-btn');
         if (btn) { btn.innerHTML = '✓ Copied'; setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy'; }, 2000); }
     });
+}
+
+function toggleCodeBlock(btn) {
+    // Walk backwards to find the closest <pre> sibling
+    let pre = btn.previousElementSibling;
+    while (pre && pre.tagName !== 'PRE') pre = pre.previousElementSibling;
+    if (!pre) return;
+    const isCollapsed = pre.classList.contains('collapsed');
+    if (isCollapsed) {
+        pre.classList.remove('collapsed');
+        btn.textContent = 'Collapse';
+    } else {
+        pre.classList.add('collapsed');
+        const lineCount = pre.querySelector('code').textContent.split('\n').length;
+        btn.textContent = `Show full code (${lineCount} lines)`;
+    }
+}
+
+function previewCodeBlock(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // textContent auto-unescapes HTML entities
+    const code = el.textContent;
+    openCodePreviewOverlay(code);
+}
+
+function _unescapeHtml(text) {
+    const ta = document.createElement('textarea');
+    ta.innerHTML = text;
+    return ta.value;
+}
+
+function openCodePreviewOverlay(htmlContent) {
+    // Remove existing overlay if any
+    const existing = document.querySelector('.code-preview-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'code-preview-overlay';
+    overlay.innerHTML = `
+        <div class="code-preview-toolbar">
+            <span class="preview-title">Live Preview</span>
+            <button class="btn btn-sm btn-primary" onclick="savePreviewAsArtifact()">Save as Artifact</button>
+            <button class="btn btn-sm btn-secondary" onclick="launchPreviewInNewTab()">Open in Tab</button>
+            <button class="btn btn-sm btn-ghost" onclick="closeCodePreview()" style="font-size:16px;padding:4px 10px">&times;</button>
+        </div>
+        <iframe class="code-preview-iframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+    `;
+    document.body.appendChild(overlay);
+
+    // Store HTML for save/launch
+    overlay._htmlContent = htmlContent;
+    const iframe = overlay.querySelector('iframe');
+    iframe.srcdoc = htmlContent;
+
+    // Close on Escape
+    overlay._keyHandler = (e) => {
+        if (e.key === 'Escape') closeCodePreview();
+    };
+    document.addEventListener('keydown', overlay._keyHandler);
+}
+
+function closeCodePreview() {
+    const overlay = document.querySelector('.code-preview-overlay');
+    if (!overlay) return;
+    document.removeEventListener('keydown', overlay._keyHandler);
+    overlay.remove();
+}
+
+function launchPreviewInNewTab() {
+    const overlay = document.querySelector('.code-preview-overlay');
+    if (!overlay) return;
+    const w = window.open('', '_blank');
+    w.document.write(overlay._htmlContent);
+    w.document.close();
+}
+
+async function savePreviewAsArtifact() {
+    const overlay = document.querySelector('.code-preview-overlay');
+    if (!overlay || !overlay._htmlContent) return toast('No content to save', 'error');
+    await _saveHtmlAsArtifact(overlay._htmlContent);
+}
+
+async function saveCodeBlockAsArtifact(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    await _saveHtmlAsArtifact(el.textContent);
+}
+
+async function _saveHtmlAsArtifact(htmlContent) {
+    const title = prompt('Artifact title:', 'Untitled');
+    if (!title) return;
+    try {
+        const resp = await fetch('/api/artifacts/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                html: htmlContent,
+                css: '',
+                js: '',
+                model: state.chatModel || '',
+            }),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        toast('Artifact saved!', 'success');
+        loadArtifacts();
+        switchPanel('artifacts');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
 }
 
 function escapeHtml(text) {

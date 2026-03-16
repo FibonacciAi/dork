@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCode();
     setupArtifacts();
     setupSkills();
+    setupLibrary();
     setupCollections();
     setupSettings();
     setupKeyboardShortcuts();
@@ -2128,6 +2129,145 @@ function openCollection(id) {
     input.click();
 }
 
+// ── Library ──────────────────────────────────────────────────────────────────
+const libraryState = {
+    selectMode: false,
+    selected: new Set(),
+    images: [],
+};
+
+function setupLibrary() {
+    loadLibrary();
+}
+
+async function loadLibrary() {
+    try {
+        const resp = await fetch('/api/image/list');
+        const data = await resp.json();
+        libraryState.images = data.images || [];
+        refreshLibraryGrid();
+    } catch {}
+}
+
+function refreshLibraryGrid() {
+    const grid = document.getElementById('library-grid');
+    const countEl = document.getElementById('library-count');
+    if (countEl) countEl.textContent = libraryState.images.length ? `${libraryState.images.length} images` : '';
+
+    if (!libraryState.images.length) {
+        grid.innerHTML = '<div class="grid-empty">No images yet. Generate images in Imagine or Chat.</div>';
+        return;
+    }
+    grid.innerHTML = libraryState.images.map(img => {
+        const isSelected = libraryState.selected.has(img.filename);
+        return `<div class="library-item ${isSelected ? 'selected' : ''} ${libraryState.selectMode ? 'select-mode' : ''}" onclick="${libraryState.selectMode ? `toggleLibraryItem('${img.filename}')` : `window.open('${img.url}','_blank')`}">
+            <img src="${img.url}" loading="lazy">
+            <button class="library-delete-x" onclick="event.stopPropagation();deleteLibraryImage('${img.filename}')" title="Delete">&times;</button>
+            ${isSelected ? '<div class="library-check">&#10003;</div>' : ''}
+            <div class="library-item-name">${img.filename}</div>
+        </div>`;
+    }).join('');
+}
+
+async function deleteLibraryImage(filename) {
+    try {
+        await fetch('/api/image/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename }),
+        });
+        libraryState.images = libraryState.images.filter(i => i.filename !== filename);
+        libraryState.selected.delete(filename);
+        refreshLibraryGrid();
+        // Sync imagine gallery and video picker
+        state.imagineImages = state.imagineImages.filter(i => i.filename !== filename);
+        refreshImagineGallery();
+        refreshVideoImagePicker();
+        toast('Deleted', 'success');
+    } catch (err) { toast(err.message || 'Delete failed', 'error'); }
+}
+
+function toggleLibrarySelect() {
+    libraryState.selectMode = !libraryState.selectMode;
+    libraryState.selected.clear();
+    const toolbar = document.getElementById('library-toolbar');
+    const selectBtn = document.getElementById('library-select-btn');
+    toolbar.style.display = libraryState.selectMode ? 'flex' : 'none';
+    selectBtn.textContent = libraryState.selectMode ? 'Done' : 'Select';
+    updateLibrarySelectedCount();
+    refreshLibraryGrid();
+}
+
+function toggleLibraryItem(filename) {
+    if (libraryState.selected.has(filename)) {
+        libraryState.selected.delete(filename);
+    } else {
+        libraryState.selected.add(filename);
+    }
+    updateLibrarySelectedCount();
+    refreshLibraryGrid();
+}
+
+function updateLibrarySelectedCount() {
+    const el = document.getElementById('library-selected-count');
+    if (el) el.textContent = `${libraryState.selected.size} selected`;
+}
+
+async function deleteSelectedLibrary() {
+    if (!libraryState.selected.size) return;
+    if (!confirm(`Delete ${libraryState.selected.size} images?`)) return;
+    const toDelete = [...libraryState.selected];
+    for (const filename of toDelete) {
+        try {
+            await fetch('/api/image/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename }),
+            });
+        } catch {}
+    }
+    libraryState.images = libraryState.images.filter(i => !libraryState.selected.has(i.filename));
+    libraryState.selected.clear();
+    libraryState.selectMode = false;
+    document.getElementById('library-toolbar').style.display = 'none';
+    document.getElementById('library-select-btn').textContent = 'Select';
+    refreshLibraryGrid();
+    // Reload imagine gallery from server to stay in sync
+    try {
+        const resp = await fetch('/api/image/list');
+        const data = await resp.json();
+        state.imagineImages = data.images || [];
+    } catch {}
+    refreshImagineGallery();
+    refreshVideoImagePicker();
+    toast('Deleted', 'success');
+}
+
+async function clearAllLibrary() {
+    if (!libraryState.images.length) return;
+    if (!confirm(`Delete all ${libraryState.images.length} images?`)) return;
+    for (const img of libraryState.images) {
+        try {
+            await fetch('/api/image/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: img.filename }),
+            });
+        } catch {}
+    }
+    libraryState.images = [];
+    libraryState.selected.clear();
+    libraryState.selectMode = false;
+    document.getElementById('library-toolbar').style.display = 'none';
+    document.getElementById('library-select-btn').textContent = 'Select';
+    refreshLibraryGrid();
+    state.imagineImages = [];
+    state.imagineSelected = null;
+    refreshImagineGallery();
+    refreshVideoImagePicker();
+    toast('All images cleared', 'success');
+}
+
 // ── Settings ─────────────────────────────────────────────────────────────────
 function setupSettings() {
     document.getElementById('settings-save').addEventListener('click', saveSettings);
@@ -2165,6 +2305,9 @@ async function loadGalleries() {
         refreshVideoGallery();
         refreshVoiceHistory();
         refreshVideoImagePicker();
+        // Sync library
+        libraryState.images = id.images || [];
+        refreshLibraryGrid();
     } catch {}
 }
 
@@ -2234,10 +2377,10 @@ function setupKeyboardShortcuts() {
 
         const cmd = e.metaKey || e.ctrlKey;
 
-        // Cmd+1-8 switch tabs
-        if (cmd && e.key >= '1' && e.key <= '8') {
+        // Cmd+1-9 switch tabs
+        if (cmd && e.key >= '1' && e.key <= '9') {
             e.preventDefault();
-            const panels = ['chat', 'imagine', 'video', 'voice', 'code', 'artifacts', 'skills', 'collections'];
+            const panels = ['chat', 'imagine', 'video', 'voice', 'code', 'artifacts', 'skills', 'library', 'collections'];
             const idx = parseInt(e.key) - 1;
             if (panels[idx]) switchPanel(panels[idx]);
             return;

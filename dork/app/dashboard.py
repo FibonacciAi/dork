@@ -669,6 +669,17 @@ def api_video_freeze():
     return jsonify({"filename": filename, "url": f"/images/{filename}"})
 
 
+@app.route("/api/video/delete", methods=["POST"])
+def api_video_delete():
+    data = request.json
+    filename = data.get("filename", "")
+    filepath = VIDEOS_DIR / Path(filename).name
+    if filepath.exists() and filepath.parent == VIDEOS_DIR:
+        filepath.unlink()
+        return jsonify({"success": True})
+    return jsonify({"error": "File not found"}), 404
+
+
 @app.route("/api/video/list")
 def api_video_list():
     videos = []
