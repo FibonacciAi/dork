@@ -54,7 +54,7 @@ html, body {
     overflow: hidden;
 }
 
-::selection { background: var(--accent-glow-strong); color: var(--text); }
+::selection { background: rgba(80, 80, 220, 0.4); color: #ffffff; }
 
 /* ── Layout ────────────────────────────────────────────────────────────── */
 
@@ -308,7 +308,7 @@ html, body {
 
 .message.user .message-avatar {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: white;
+    color: var(--btn-text, white);
 }
 
 .message.assistant .message-avatar {
@@ -336,7 +336,7 @@ html, body {
 .message.user .message-body {
     background: linear-gradient(135deg, var(--accent-dim), var(--accent));
     border-color: transparent;
-    color: white;
+    color: var(--btn-text, white);
     border-radius: var(--radius) var(--radius) 4px var(--radius);
 }
 
@@ -608,7 +608,7 @@ html, body {
     height: 42px;
     border: none;
     background: linear-gradient(135deg, var(--accent-dim), var(--accent));
-    color: white;
+    color: var(--btn-text, white);
     border-radius: 10px;
     cursor: pointer;
     display: flex;
@@ -1540,6 +1540,40 @@ html, body {
 
 .settings-section { margin-bottom: 28px; }
 
+.skin-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.skin-swatch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-deep);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.skin-swatch:hover { border-color: var(--border-active); background: var(--bg-hover); }
+.skin-swatch.active { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+.skin-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+}
+.skin-name {
+    font-size: 11px;
+    font-family: var(--font-display);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.skin-swatch.active .skin-name { color: var(--text); }
+
 .settings-title {
     font-family: var(--font-display);
     font-size: 17px;
@@ -1639,7 +1673,7 @@ textarea::placeholder, input::placeholder { color: var(--text-dim); }
 
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-dim), var(--accent));
-    color: white;
+    color: var(--btn-text, white);
 }
 .btn-primary:hover { background: linear-gradient(135deg, var(--accent), var(--accent-bright)); box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
 .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }

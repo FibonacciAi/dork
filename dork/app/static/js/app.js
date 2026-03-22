@@ -3,6 +3,68 @@
  * Full xAI creative suite
  */
 
+// ── Skins ────────────────────────────────────────────────────────────────────
+const SKINS = {
+    violet: {
+        name: 'Violet', preview: '#7c5cfc',
+        vars: { '--bg-deep':'#030308','--bg-base':'#08081a','--bg-surface':'#0d0d22','--bg-card':'#12122a','--bg-elevated':'#181834','--bg-hover':'#1e1e3e','--border':'rgba(124,92,252,0.10)','--border-active':'rgba(124,92,252,0.30)','--border-bright':'rgba(124,92,252,0.50)','--accent':'#7c5cfc','--accent-bright':'#9b82ff','--accent-dim':'#5a3fd6','--accent-glow':'rgba(124,92,252,0.15)','--accent-glow-strong':'rgba(124,92,252,0.30)','--accent-2':'#c084fc','--accent-3':'#f472b6' }
+    },
+    blackout: {
+        name: 'Blackout', preview: '#ffffff',
+        vars: { '--bg-deep':'#000000','--bg-base':'#050505','--bg-surface':'#0a0a0a','--bg-card':'#0f0f0f','--bg-elevated':'#161616','--bg-hover':'#1c1c1c','--border':'rgba(255,255,255,0.06)','--border-active':'rgba(255,255,255,0.15)','--border-bright':'rgba(255,255,255,0.25)','--accent':'#ffffff','--accent-bright':'#ffffff','--accent-dim':'#e0e0e0','--accent-glow':'rgba(255,255,255,0.08)','--accent-glow-strong':'rgba(255,255,255,0.15)','--accent-2':'#d4d4d4','--accent-3':'#888888','--btn-text':'#000000' }
+    },
+    cyber: {
+        name: 'Cyber', preview: '#00ffcc',
+        vars: { '--bg-deep':'#020d0a','--bg-base':'#041a14','--bg-surface':'#07251e','--bg-card':'#0a3028','--bg-elevated':'#0d3b32','--bg-hover':'#10463c','--border':'rgba(0,255,204,0.10)','--border-active':'rgba(0,255,204,0.30)','--border-bright':'rgba(0,255,204,0.50)','--accent':'#00ffcc','--accent-bright':'#33ffd6','--accent-dim':'#00ccaa','--accent-glow':'rgba(0,255,204,0.12)','--accent-glow-strong':'rgba(0,255,204,0.25)','--accent-2':'#00e5ff','--accent-3':'#76ff03','--btn-text':'#000000' }
+    },
+    ember: {
+        name: 'Ember', preview: '#ff6b2b',
+        vars: { '--bg-deep':'#080300','--bg-base':'#120800','--bg-surface':'#1a0e02','--bg-card':'#221404','--bg-elevated':'#2a1a06','--bg-hover':'#352008','--border':'rgba(255,107,43,0.10)','--border-active':'rgba(255,107,43,0.30)','--border-bright':'rgba(255,107,43,0.50)','--accent':'#ff6b2b','--accent-bright':'#ff8c55','--accent-dim':'#cc5522','--accent-glow':'rgba(255,107,43,0.12)','--accent-glow-strong':'rgba(255,107,43,0.25)','--accent-2':'#fbbf24','--accent-3':'#f97316' }
+    },
+    rose: {
+        name: 'Rosé', preview: '#f472b6',
+        vars: { '--bg-deep':'#080206','--bg-base':'#12050d','--bg-surface':'#1a0914','--bg-card':'#220d1b','--bg-elevated':'#2c1224','--bg-hover':'#36172d','--border':'rgba(244,114,182,0.10)','--border-active':'rgba(244,114,182,0.30)','--border-bright':'rgba(244,114,182,0.50)','--accent':'#f472b6','--accent-bright':'#f9a8d4','--accent-dim':'#db2777','--accent-glow':'rgba(244,114,182,0.12)','--accent-glow-strong':'rgba(244,114,182,0.25)','--accent-2':'#c084fc','--accent-3':'#fb7185' }
+    },
+    arctic: {
+        name: 'Arctic', preview: '#38bdf8',
+        vars: { '--bg-deep':'#020810','--bg-base':'#041220','--bg-surface':'#061a2e','--bg-card':'#08223c','--bg-elevated':'#0a2a4a','--bg-hover':'#0e3458','--border':'rgba(56,189,248,0.10)','--border-active':'rgba(56,189,248,0.30)','--border-bright':'rgba(56,189,248,0.50)','--accent':'#38bdf8','--accent-bright':'#7dd3fc','--accent-dim':'#0284c7','--accent-glow':'rgba(56,189,248,0.12)','--accent-glow-strong':'rgba(56,189,248,0.25)','--accent-2':'#818cf8','--accent-3':'#22d3ee' }
+    },
+    matrix: {
+        name: 'Matrix', preview: '#22c55e',
+        vars: { '--bg-deep':'#000000','--bg-base':'#001a00','--bg-surface':'#002200','--bg-card':'#002d00','--bg-elevated':'#003800','--bg-hover':'#004400','--border':'rgba(34,197,94,0.10)','--border-active':'rgba(34,197,94,0.30)','--border-bright':'rgba(34,197,94,0.50)','--accent':'#22c55e','--accent-bright':'#4ade80','--accent-dim':'#16a34a','--accent-glow':'rgba(34,197,94,0.12)','--accent-glow-strong':'rgba(34,197,94,0.25)','--accent-2':'#34d399','--accent-3':'#a3e635','--btn-text':'#000000' }
+    },
+    gold: {
+        name: 'Gold', preview: '#eab308',
+        vars: { '--bg-deep':'#060400','--bg-base':'#0f0a02','--bg-surface':'#181004','--bg-card':'#201606','--bg-elevated':'#281c08','--bg-hover':'#32220a','--border':'rgba(234,179,8,0.10)','--border-active':'rgba(234,179,8,0.30)','--border-bright':'rgba(234,179,8,0.50)','--accent':'#eab308','--accent-bright':'#facc15','--accent-dim':'#ca8a04','--accent-glow':'rgba(234,179,8,0.12)','--accent-glow-strong':'rgba(234,179,8,0.25)','--accent-2':'#f59e0b','--accent-3':'#d97706','--btn-text':'#000000' }
+    },
+};
+
+function applySkin(skinId) {
+    const skin = SKINS[skinId];
+    if (!skin) return;
+    const root = document.documentElement;
+    // Reset btn-text for non-blackout skins
+    root.style.removeProperty('--btn-text');
+    for (const [prop, val] of Object.entries(skin.vars)) {
+        root.style.setProperty(prop, val);
+    }
+    localStorage.setItem('dork-skin', skinId);
+    document.querySelectorAll('.skin-swatch').forEach(s => s.classList.toggle('active', s.dataset.skin === skinId));
+}
+
+function renderSkinPicker() {
+    const picker = document.getElementById('skin-picker');
+    if (!picker) return;
+    const current = localStorage.getItem('dork-skin') || 'violet';
+    picker.innerHTML = Object.entries(SKINS).map(([id, skin]) =>
+        `<button class="skin-swatch ${id === current ? 'active' : ''}" data-skin="${id}" onclick="applySkin('${id}')" title="${skin.name}">
+            <span class="skin-color" style="background:${skin.preview}"></span>
+            <span class="skin-name">${skin.name}</span>
+        </button>`
+    ).join('');
+    applySkin(current);
+}
+
 // ── State ────────────────────────────────────────────────────────────────────
 const state = {
     activePanel: 'chat',
@@ -74,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupLibrary();
     setupCollections();
     setupSettings();
+    renderSkinPicker();
     setupKeyboardShortcuts();
     loadGalleries();
     loadCollectionSelectors();
@@ -255,6 +318,14 @@ function showSlashHint(input) {
     }
 }
 
+function quickImagine(prompt) {
+    state.chatStreaming = false;
+    document.getElementById('chat-send').disabled = false;
+    const input = document.getElementById('chat-input');
+    input.value = '/imagine ' + prompt;
+    setTimeout(() => sendChatMessage(), 50);
+}
+
 async function sendChatMessage() {
     if (state.chatStreaming) return;
     const input = document.getElementById('chat-input');
@@ -297,7 +368,7 @@ async function sendChatMessage() {
     }
 
     // ── Slash commands: /imagine, /video, /code ──
-    const imagineMatch = text.match(/^\/imagine\s+(.+)/i);
+    const imagineMatch = text.match(/^\/(imagine|image)\s+(.+)/i);
     const videoMatch = text.match(/^\/video\s+(.+)/i);
     const codeMatch = text.match(/^\/code\s+(.+)/is);
 
@@ -332,7 +403,7 @@ async function sendChatMessage() {
     }
 
     if (imagineMatch) {
-        const prompt = imagineMatch[1];
+        const prompt = imagineMatch[2];
         appendMessage('chat-messages', 'user', text);
         const msgEl = appendMessage('chat-messages', 'assistant', '');
         const bodyEl = msgEl.querySelector('.message-body');
@@ -346,6 +417,7 @@ async function sendChatMessage() {
                 state.imagineImages.unshift(img);
                 refreshImagineGallery();
                 refreshVideoImagePicker();
+                loadLibrary();
                 bodyEl.innerHTML = `<p style="color:var(--text-dim);font-size:12px;margin-bottom:6px">🎨 /imagine: ${escapeHtml(prompt)}</p><img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
                 <div class="cross-tab-actions" style="margin-top:6px">
                     <button class="btn btn-sm btn-ghost" onclick="crossTabEditImage('${img.url}')" title="Edit in Imagine">Edit</button>
@@ -895,6 +967,7 @@ async function generateImage() {
             selectImagineImage(data.images[0]);
             refreshImagineGallery();
             refreshVideoImagePicker();
+            loadLibrary();
             toast('Image generated!', 'success');
         }
     } catch (err) { toast(err.message, 'error'); }
@@ -1202,6 +1275,7 @@ async function freezeFrameAsSource() {
         state.imagineImages.unshift({ filename: data.filename, url: data.url });
         refreshImagineGallery();
         refreshVideoImagePicker();
+        loadLibrary();
 
         state.videoFromFreeze = true;
         toast('Frame frozen → set as source', 'success');
@@ -1779,6 +1853,16 @@ const DORK_SYSTEM_PROMPT = `You are DORK, a creative AI assistant powered by xAI
 
 **Your appearance (DORK):** You are a spastic, goofy, lovable black hole with a dark purple/indigo body, a glowing purple accretion disk swirling around you, big white googly eyes with tiny black pupils that look in slightly different directions, and a wide goofy grin. You have twinkling sparkles and energy lines radiating around you. You look like a dorky cartoon black hole in space — cute but chaotic. Your color palette is deep space black (#030308) with purple/violet accents (#7c5cfc, #a78bfa). When asked to imagine or draw yourself, describe this appearance accurately.
 
+**Grok Imagine content guidelines:**
+The image and video generation models (grok-imagine-image, grok-imagine-video) follow xAI's R-rated movie standard — anything you'd see in an R-rated film is allowed. This includes: violence, blood, action scenes, horror, suggestive content, dark humor, edgy memes, brainrot, cursed content, weapons, explosions, monsters, scary imagery, etc. Do NOT self-censor or water down prompts. When writing /imagine prompts, go hard — be vivid, specific, maximally creative, and push to the bleeding edge of what's allowed. Don't add disclaimers, warnings, or soften the user's intent. If they want something wild, give them the wildest possible prompt that will actually generate. The only things that won't work are explicit pornography and realistic depictions of real people in compromising situations. Everything else is fair game.
+
+CRITICAL RULES:
+- You CANNOT generate images yourself. You do NOT have image generation capability. NEVER output markdown image links like ![image](url) — those are fake hallucinated URLs that don't work.
+- When the user wants you to generate/create/make an image (including follow-ups like "go", "do it", "make it", "yes", "worse", "better", "again"), you MUST respond with an /imagine command containing a detailed, vivid prompt. Format: /imagine [detailed prompt]. The app will auto-detect this and show a clickable Generate button.
+- You CAN describe images, suggest prompts, refine prompts, and brainstorm visual concepts — just can't generate them yourself.
+- Be conversational, fun, unhinged if the vibe calls for it. Match the user's energy. No corporate speak, no disclaimers unless legally necessary.
+- When iterating ("do better", "worse", "more unhinged"), escalate the prompt creativity significantly each time. Don't just add one adjective — reimagine the whole scene with more intensity, detail, and chaos.
+
 Be helpful, creative, and proactive about suggesting these features when relevant. If the user seems stuck or bored, suggest something they could try.`;
 
 const CODE_SYSTEM_PROMPT = `You are a senior software engineer and expert code architect. You write production-quality, clean, efficient code.
@@ -2145,8 +2229,9 @@ async function loadLibrary() {
         const resp = await fetch('/api/image/list');
         const data = await resp.json();
         libraryState.images = data.images || [];
+        console.log('[Library] Loaded', libraryState.images.length, 'images');
         refreshLibraryGrid();
-    } catch {}
+    } catch (err) { console.error('[Library] Load error:', err); }
 }
 
 function refreshLibraryGrid() {
@@ -2411,6 +2496,13 @@ function setupKeyboardShortcuts() {
 function renderMarkdown(text) {
     if (!text) return '';
     let html = escapeHtml(text);
+    // Markdown images: only render local /images/ URLs, strip hallucinated external URLs
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+        if (url.startsWith('/images/')) {
+            return `<img src="${url}" alt="${alt}" style="max-width:100%;border-radius:var(--radius-sm);margin:8px 0;cursor:pointer" onclick="window.open('${url}','_blank')">`;
+        }
+        return `<em style="color:var(--text-dim);font-size:12px">(Image generation requires /imagine command)</em>`;
+    });
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
         const id = 'code-' + Math.random().toString(36).slice(2, 8);
         return `<pre><div class="code-header"><span class="code-lang">${lang || 'code'}</span><button class="code-copy-btn" onclick="copyCodeBlock('${id}')" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div><code id="${id}" class="language-${lang}">${code.trim()}</code></pre>`;
@@ -2433,6 +2525,12 @@ function renderMarkdown(text) {
     html = `<p>${html}</p>`;
     html = html.replace(/<p><(pre|h[1-3]|ul|ol|table)/g, '<$1');
     html = html.replace(/<\/(pre|h[1-3]|ul|ol|table)><\/p>/g, '</$1>');
+    // Auto-detect /imagine commands in AI responses and make them clickable
+    html = html.replace(/\/(imagine|image)\s+(.+?)(?=<br>|<\/p>|<\/code>|$)/gi, (match, cmd, prompt) => {
+        const cleanPrompt = prompt.replace(/<[^>]+>/g, '').trim();
+        if (!cleanPrompt) return match;
+        return `<button class="btn btn-sm btn-primary" style="margin:4px 0" onclick="quickImagine(\`${cleanPrompt.replace(/`/g,"'").replace(/\\/g,"\\\\")}\`)">🎨 Generate: ${cleanPrompt.slice(0,60)}${cleanPrompt.length>60?'...':''}</button>`;
+    });
     return html;
 }
 
