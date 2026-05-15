@@ -9,6 +9,7 @@ import json
 import time
 import uuid
 import base64
+import io
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -21,7 +22,7 @@ from flask import (
 )
 
 # Load .env from project root
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 # ── Directories ──────────────────────────────────────────────────────────────
 HOME = Path.home()
@@ -34,8 +35,12 @@ UPLOADS_DIR = DATA_DIR / "Uploads"
 ARTIFACTS_DIR = DATA_DIR / "Artifacts"
 SKILLS_DIR = DATA_DIR / "Skills"
 
-for d in [SETTINGS_DIR, IMAGES_DIR, VIDEOS_DIR, AUDIO_DIR, UPLOADS_DIR, ARTIFACTS_DIR, SKILLS_DIR]:
+ASSET_LIB_DIR = SETTINGS_DIR / "asset-library"
+
+for d in [SETTINGS_DIR, IMAGES_DIR, VIDEOS_DIR, AUDIO_DIR, UPLOADS_DIR, ARTIFACTS_DIR, SKILLS_DIR, ASSET_LIB_DIR]:
     d.mkdir(parents=True, exist_ok=True)
+
+ASSET_LIB_INDEX = ASSET_LIB_DIR / "index.json"
 
 # Migrate old settings if they exist
 SETTINGS_FILE = SETTINGS_DIR / "settings.json"
@@ -55,6 +60,18 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0  # No caching in dev
 
 XAI_BASE = "https://api.x.ai/v1"
 OPENAI_BASE = "https://api.openai.com/v1"
+DEFAULT_IMAGE_MODEL = "grok-imagine-image-quality"
+DEFAULT_IMAGE_RESOLUTION = "2k"
+DEFAULT_IMAGE_ASPECT_RATIO = "auto"
+DEFAULT_VIDEO_MODEL = "grok-imagine-video"
+DEFAULT_VIDEO_RESOLUTION = "720p"
+DEFAULT_VIDEO_ASPECT_RATIO = "16:9"
+DEFAULT_VIDEO_DURATION = 8
+
+IMAGE_RESOLUTIONS = {"1k", "2k"}
+IMAGE_ASPECT_RATIOS = {"auto", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "2:1", "1:2", "19.5:9", "9:19.5", "20:9", "9:20"}
+VIDEO_RESOLUTIONS = {"480p", "720p"}
+VIDEO_ASPECT_RATIOS = {"1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"}
 
 # ── Models Registry ──────────────────────────────────────────────────────────
 MODELS = {
@@ -67,13 +84,26 @@ MODELS = {
         {"id": "grok-4-1-fast-non-reasoning", "name": "Grok 4.1 Fast", "context": 2000000, "tag": "fast"},
     ],
     "image": [
+        {"id": "grok-imagine-image-quality", "name": "Grok Imagine Quality", "price": "$0.05"},
         {"id": "grok-imagine-image", "name": "Grok Imagine", "price": "$0.02"},
-        {"id": "grok-imagine-image-pro", "name": "Grok Imagine Pro", "price": "$0.07"},
         {"id": "gpt-image-1", "name": "ChatGPT Image", "price": "~$0.04"},
     ],
     "video": [
         {"id": "grok-imagine-video", "name": "Grok Imagine Video", "price": "$0.05/s"},
     ],
+}
+
+EARLY_ACCESS_MODEL_HINTS = [
+    {"id": "grok-4.3-beta", "name": "Grok 4.3 Beta", "context": 2000000, "tag": "early-access", "early_access": True},
+    {"id": "grok-4-3-beta", "name": "Grok 4.3 Beta", "context": 2000000, "tag": "early-access", "early_access": True},
+    {"id": "grok-4.3-beta-early-access", "name": "Grok 4.3 Beta Early Access", "context": 2000000, "tag": "early-access", "early_access": True},
+]
+
+DEFAULT_CHAT_MODEL = "grok-4.20-beta-0309-non-reasoning"
+LANGUAGE_MODEL_ALIASES = {
+    "grok-4.3-beta": "grok-4.3",
+    "grok-4-3-beta": "grok-4.3",
+    "grok-4.3-beta-early-access": "grok-4.3",
 }
 
 
@@ -125,21 +155,188 @@ def _upload_file_to_collection(filename, file_bytes, content_type, collection_id
         raise ValueError(_parse_xai_error(e))
 
 
+IMAGE_EXTENSIONS = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
+
+REFERENCE_IMAGE_MIMES = {"image/png", "image/jpeg", "image/webp"}
+XAI_REFERENCE_IMAGE_MIMES = {"image/png", "image/jpeg"}
+XAI_REFERENCE_MAX_DIMENSION = 2048
+XAI_REFERENCE_MAX_BYTES = 18 * 1024 * 1024
+
+
+def _strip_data_uri(image_data):
+    """Accept either raw base64 or a data URI from the browser."""
+    image_data = (image_data or "").strip()
+    if image_data.startswith("data:") and "," in image_data:
+        return image_data.split(",", 1)[1]
+    return image_data
+
+
+def _mime_from_image_bytes(image_bytes):
+    if image_bytes[:3] == b'\xff\xd8\xff':
+        return "image/jpeg"
+    if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        return "image/png"
+    if image_bytes[:4] == b'RIFF' and image_bytes[8:12] == b'WEBP':
+        return "image/webp"
+    if image_bytes[:4] == b'GIF8':
+        return "image/gif"
+    return ""
+
+
 def _detect_mime(b64_data):
     """Detect actual MIME type from base64-encoded image data."""
+    b64_data = _strip_data_uri(b64_data)
     try:
         header = base64.b64decode(b64_data[:32])
-        if header[:3] == b'\xff\xd8\xff':
-            return "image/jpeg"
-        elif header[:8] == b'\x89PNG\r\n\x1a\n':
-            return "image/png"
-        elif header[:4] == b'RIFF' and header[8:12] == b'WEBP':
-            return "image/webp"
-        elif header[:4] == b'GIF8':
-            return "image/gif"
+        detected = _mime_from_image_bytes(header)
+        if detected:
+            return detected
     except Exception:
         pass
     return "image/png"
+
+
+def _reference_image_parts(image_data, *, allow_gif=False):
+    b64_data = _strip_data_uri(image_data)
+    if not b64_data:
+        raise ValueError("Reference image is empty")
+    try:
+        image_bytes = base64.b64decode(b64_data, validate=True)
+    except Exception:
+        raise ValueError("Reference image data is not valid base64")
+    mime = _mime_from_image_bytes(image_bytes)
+    allowed = set(REFERENCE_IMAGE_MIMES)
+    if allow_gif:
+        allowed.add("image/gif")
+    if mime not in allowed:
+        raise ValueError("Reference image must be PNG, JPG, or WEBP")
+    return b64_data, image_bytes, mime, f"data:{mime};base64,{b64_data}"
+
+
+def _xai_reference_data_uri(image_data):
+    """Normalize refs to formats xAI image edits reliably accept: PNG or JPEG."""
+    b64_data, image_bytes, mime, data_uri = _reference_image_parts(image_data)
+    if mime in XAI_REFERENCE_IMAGE_MIMES and len(image_bytes) <= XAI_REFERENCE_MAX_BYTES:
+        return data_uri
+
+    try:
+        from PIL import Image
+    except Exception:
+        if mime in XAI_REFERENCE_IMAGE_MIMES:
+            return data_uri
+        raise ValueError("Reference image must be PNG or JPG for xAI edits")
+
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        img.load()
+    except Exception:
+        raise ValueError("Reference image could not be decoded")
+
+    width, height = img.size
+    longest = max(width, height)
+    if longest > XAI_REFERENCE_MAX_DIMENSION:
+        scale = XAI_REFERENCE_MAX_DIMENSION / longest
+        img = img.resize((max(1, round(width * scale)), max(1, round(height * scale))), Image.LANCZOS)
+
+    has_alpha = img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info)
+    if has_alpha:
+        output = io.BytesIO()
+        img.convert("RGBA").save(output, format="PNG", optimize=True)
+        out_bytes = output.getvalue()
+        if len(out_bytes) <= XAI_REFERENCE_MAX_BYTES:
+            return f"data:image/png;base64,{base64.b64encode(out_bytes).decode('ascii')}"
+
+    quality = 92
+    working = img.convert("RGB")
+    while True:
+        output = io.BytesIO()
+        working.save(output, format="JPEG", quality=quality, optimize=True)
+        out_bytes = output.getvalue()
+        if len(out_bytes) <= XAI_REFERENCE_MAX_BYTES or quality <= 74:
+            return f"data:image/jpeg;base64,{base64.b64encode(out_bytes).decode('ascii')}"
+        quality -= 6
+
+
+def _save_image_result(img_data, prefix, prompt, model, index):
+    b64 = img_data.get("b64_json") or img_data.get("base64") or ""
+    if b64:
+        b64 = _strip_data_uri(b64)
+        ts = int(time.time() * 1000)
+        mime = _detect_mime(b64)
+        ext = IMAGE_EXTENSIONS.get(mime, ".png")
+        filename = f"{prefix}_{ts}_{index}{ext}"
+        filepath = IMAGES_DIR / filename
+        filepath.write_bytes(base64.b64decode(b64))
+        return {"filename": filename, "url": f"/images/{filename}", "prompt": prompt, "model": model}
+
+    url = img_data.get("url", "")
+    if not url:
+        return None
+
+    try:
+        req = urllib.request.Request(url, method="GET")
+        req.add_header("User-Agent", "DorkPlus/1.0")
+        resp = urllib.request.urlopen(req, timeout=120)
+        image_bytes = resp.read()
+        content_type = resp.headers.get("Content-Type", "").split(";", 1)[0].lower()
+        mime = content_type if content_type in IMAGE_EXTENSIONS else (_mime_from_image_bytes(image_bytes) or "image/png")
+        ext = IMAGE_EXTENSIONS.get(mime, ".png")
+        ts = int(time.time() * 1000)
+        filename = f"{prefix}_{ts}_{index}{ext}"
+        filepath = IMAGES_DIR / filename
+        filepath.write_bytes(image_bytes)
+        return {"filename": filename, "url": f"/images/{filename}", "prompt": prompt, "model": model}
+    except Exception:
+        return {"filename": "", "url": url, "prompt": prompt, "model": model}
+
+
+def _save_image_results(result, prefix, prompt, model):
+    saved = []
+    for i, img_data in enumerate(result.get("data", [])):
+        saved_img = _save_image_result(img_data, prefix, prompt, model, i)
+        if saved_img:
+            saved.append(saved_img)
+    return saved
+
+
+def _xai_image_edit(model, prompt, data_uri, settings=None):
+    """Call xAI image edits with compatible JSON payload variants.
+
+    Strategy: try the cleanest nested shape first; if that 422s, try mobile-style
+    with `type:image_url`; finally try `images:[]` array. Other 422 causes (prompt
+    moderation, image too large, etc.) get surfaced verbatim so the user can act.
+    """
+    if not model or not model.startswith("grok-imagine-image"):
+        model = DEFAULT_IMAGE_MODEL
+    settings = settings or {}
+
+    variants = [
+        {"image": {"url": data_uri, "type": "image_url"}},
+        {"image": {"url": data_uri}},
+        {"images": [{"type": "image_url", "url": data_uri}]},
+        {"image": data_uri},
+        {"image_url": data_uri},
+        {"image_urls": [data_uri]},
+    ]
+    last_422 = None
+    for variant in variants:
+        payload = {"model": model, "prompt": prompt, **settings, **variant}
+        try:
+            return xai_request("images/edits", payload)
+        except ValueError as e:
+            msg = str(e)
+            if "422" in msg or "unprocessable" in msg.lower():
+                last_422 = msg
+                continue
+            raise
+    if last_422:
+        raise ValueError(f"xAI rejected the edit request: {last_422}")
+    raise ValueError("xAI image edit failed across all payload shapes")
 
 
 def _parse_xai_error(e):
@@ -148,8 +345,10 @@ def _parse_xai_error(e):
         body = json.loads(e.read().decode("utf-8"))
         err = body.get("error", body.get("code", ""))
         if isinstance(err, dict):
-            return err.get("message", str(err))
-        return str(err) or f"HTTP {e.code}"
+            msg = err.get("message", str(err))
+        else:
+            msg = str(err)
+        return f"HTTP {e.code}: {msg}" if msg else f"HTTP {e.code}"
     except Exception:
         return f"HTTP {e.code}"
 
@@ -160,8 +359,10 @@ def _parse_openai_error(e):
         body = json.loads(e.read().decode("utf-8"))
         err = body.get("error", {})
         if isinstance(err, dict):
-            return err.get("message", str(err))
-        return str(err) or f"HTTP {e.code}"
+            msg = err.get("message", str(err))
+        else:
+            msg = str(err)
+        return f"HTTP {e.code}: {msg}" if msg else f"HTTP {e.code}"
     except Exception:
         return f"HTTP {e.code}"
 
@@ -208,6 +409,244 @@ def xai_get(endpoint):
         raise ValueError(_parse_xai_error(e))
 
 
+def xai_get_optional(endpoint):
+    api_key = get_api_key()
+    if not api_key:
+        return None
+
+    url = f"{XAI_BASE}/{endpoint}"
+    req = urllib.request.Request(url, method="GET")
+    req.add_header("Authorization", f"Bearer {api_key}")
+    req.add_header("User-Agent", "DorkPlus/1.0")
+
+    try:
+        resp = urllib.request.urlopen(req, timeout=30)
+        return json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+
+
+def _label_model(model_id):
+    name = model_id.replace("-", " ")
+    name = " ".join(part.upper() if part in ("ai", "tts") else part.capitalize() for part in name.split())
+    return name.replace("Grok 4 3", "Grok 4.3").replace("Grok 4 20", "Grok 4.20").replace("Grok 4 1", "Grok 4.1")
+
+
+def discover_language_models():
+    discovered = []
+    raw = xai_get_optional("models")
+    if raw:
+        for item in raw.get("data", []):
+            model_id = item.get("id", "")
+            if not model_id or "grok" not in model_id.lower():
+                continue
+            lower = model_id.lower()
+            if any(skip in lower for skip in ("imagine", "image", "video", "tts", "audio", "voice")):
+                continue
+            if "4.3" in lower or "4-3" in lower:
+                tag = "early-access"
+            elif "code" in lower:
+                tag = "code"
+            elif "multi-agent" in lower:
+                tag = "multi-agent"
+            elif "non-reasoning" in lower:
+                tag = "fast"
+            elif "reasoning" in lower:
+                tag = "reasoning"
+            else:
+                tag = "fast"
+            discovered.append({
+                "id": model_id,
+                "name": _label_model(model_id),
+                "context": 2000000 if "4" in lower else 256000,
+                "tag": tag,
+                "early_access": tag == "early-access",
+                "available": True,
+            })
+
+    builtin_order = {m["id"]: i for i, m in enumerate(MODELS["language"])}
+    by_id = {m["id"]: dict(m, available=True, builtin=True) for m in MODELS["language"]}
+    for model in discovered:
+        by_id[model["id"]] = {**by_id.get(model["id"], {}), **model}
+    for hint in EARLY_ACCESS_MODEL_HINTS:
+        if hint["id"] in by_id:
+            by_id[hint["id"]] = {**hint, **by_id[hint["id"]]}
+        elif raw:
+            by_id[hint["id"]] = {**hint, "available": False}
+
+    def sort_key(model):
+        if model.get("tag") == "early-access":
+            return (0, model.get("name", ""))
+        if model.get("id") in builtin_order:
+            return (1, builtin_order[model["id"]])
+        order = {"multi-agent": 2, "reasoning": 3, "fast": 4, "code": 5}
+        return (order.get(model.get("tag"), 9), model.get("name", ""))
+
+    return sorted(by_id.values(), key=sort_key)
+
+
+def _coerce_choice(value, allowed, default):
+    value = str(value or "").strip()
+    return value if value in allowed else default
+
+
+def _coerce_int(value, default, minimum, maximum):
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(minimum, min(maximum, parsed))
+
+
+def _price_label(cents):
+    if cents is None:
+        return ""
+    try:
+        value = float(cents)
+    except (TypeError, ValueError):
+        return ""
+    dollars = value / 100
+    if dollars > 100:
+        dollars = value / 10_000_000_000
+    return f"${dollars:.2f}"
+
+
+def _model_items(raw):
+    if not raw:
+        return []
+    if isinstance(raw.get("models"), list):
+        return raw["models"]
+    if isinstance(raw.get("data"), list):
+        return raw["data"]
+    return []
+
+
+def discover_generation_models(endpoint, builtin, *, fallback_tag, price_key=None):
+    raw = xai_get_optional(endpoint)
+    by_id = {m["id"]: dict(m, available=True, builtin=True) for m in builtin}
+    for item in _model_items(raw):
+        model_id = item.get("id", "")
+        if not model_id:
+            continue
+        model = {
+            "id": model_id,
+            "name": _label_model(model_id),
+            "tag": fallback_tag,
+            "available": True,
+            "version": item.get("version", ""),
+            "aliases": item.get("aliases", []),
+            "fingerprint": item.get("fingerprint", ""),
+        }
+        existing = by_id.get(model_id, {})
+        price = _price_label(item.get(price_key)) if price_key else ""
+        if price and not existing.get("price"):
+            model["price"] = price
+        by_id[model_id] = {**by_id.get(model_id, {}), **model}
+
+    return list(by_id.values())
+
+
+def build_xai_tools(tool_ids, collection_ids=None):
+    tools = []
+    for tool_id in tool_ids or []:
+        if tool_id == "web_search":
+            tools.append({"type": "web_search"})
+        elif tool_id == "x_search":
+            tools.append({"type": "x_search"})
+        elif tool_id == "code_execution":
+            tools.append({"type": "code_execution"})
+        elif tool_id == "collections_search":
+            tool = {"type": "collections_search"}
+            if collection_ids:
+                tool["collection_ids"] = collection_ids
+            tools.append(tool)
+    return tools
+
+
+def normalize_language_model(model, *, allow_openai=False):
+    model = (model or DEFAULT_CHAT_MODEL).strip()
+    if allow_openai and model.startswith(("gpt-", "o3", "o4", "chatgpt-")):
+        return model
+    return LANGUAGE_MODEL_ALIASES.get(model, model or DEFAULT_CHAT_MODEL)
+
+
+def _chat_part_image_url(part):
+    image = part.get("image_url") if isinstance(part, dict) else None
+    if isinstance(image, dict):
+        return image.get("url", "")
+    if isinstance(image, str):
+        return image
+    return part.get("url", "") if isinstance(part, dict) else ""
+
+
+def sanitize_chat_messages(messages):
+    """Keep chat payloads valid even if localStorage has stale image attachments."""
+    safe = []
+    last_image_idx = -1
+    for i, msg in enumerate(messages or []):
+        content = msg.get("content") if isinstance(msg, dict) else ""
+        if isinstance(content, list) and any(
+            isinstance(part, dict) and part.get("type") == "image_url" for part in content
+        ):
+            last_image_idx = i
+
+    for i, msg in enumerate(messages or []):
+        if not isinstance(msg, dict):
+            continue
+        role = msg.get("role", "user")
+        if role not in ("system", "user", "assistant"):
+            role = "user"
+        content = msg.get("content", "")
+        if isinstance(content, list):
+            parts = []
+            omitted = False
+            for part in content:
+                if not isinstance(part, dict):
+                    continue
+                if part.get("type") == "text":
+                    text = part.get("text", "")
+                    if text:
+                        parts.append({"type": "text", "text": text})
+                elif part.get("type") == "image_url":
+                    if i != last_image_idx:
+                        omitted = True
+                        continue
+                    url = _chat_part_image_url(part)
+                    if not url:
+                        omitted = True
+                        continue
+                    if url.startswith("data:"):
+                        try:
+                            url = _xai_reference_data_uri(url)
+                        except Exception:
+                            omitted = True
+                            continue
+                    parts.append({"type": "image_url", "image_url": {"url": url}})
+            if omitted:
+                parts.append({"type": "text", "text": "[Earlier or unsupported image attachment omitted.]"})
+            if not parts:
+                continue
+            content = parts
+        elif not isinstance(content, str):
+            content = str(content)
+        if content == "":
+            continue
+        safe.append({"role": role, "content": content})
+    return safe
+
+
+def extract_response_text(result):
+    if result.get("output_text"):
+        return result["output_text"]
+    parts = []
+    for item in result.get("output", []):
+        for content in item.get("content", []):
+            text = content.get("text") or content.get("value")
+            if text:
+                parts.append(text)
+    return "\n".join(parts)
+
+
 def openai_request(endpoint, payload):
     """Make a request to the OpenAI API."""
     api_key = get_openai_api_key()
@@ -220,6 +659,46 @@ def openai_request(endpoint, payload):
     req = urllib.request.Request(url, data=data, method="POST")
     req.add_header("Authorization", f"Bearer {api_key}")
     req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "DorkPlus/1.0")
+
+    try:
+        resp = urllib.request.urlopen(req, timeout=300)
+        return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise ValueError(_parse_openai_error(e))
+
+
+def openai_multipart_request(endpoint, fields, files):
+    """Make a multipart/form-data request to OpenAI."""
+    api_key = get_openai_api_key()
+    if not api_key:
+        raise ValueError("No OpenAI API key configured — set it in Settings or .env")
+
+    boundary = uuid.uuid4().hex
+    body = bytearray()
+
+    for name, value in fields.items():
+        if value is None:
+            continue
+        body += f"--{boundary}\r\n".encode()
+        body += f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode()
+        body += str(value).encode("utf-8")
+        body += b"\r\n"
+
+    for name, filename, content_type, file_bytes in files:
+        body += f"--{boundary}\r\n".encode()
+        body += (
+            f'Content-Disposition: form-data; name="{name}"; filename="{filename}"\r\n'
+            f"Content-Type: {content_type}\r\n\r\n"
+        ).encode()
+        body += file_bytes
+        body += b"\r\n"
+
+    body += f"--{boundary}--\r\n".encode()
+
+    req = urllib.request.Request(f"{OPENAI_BASE}/{endpoint}", data=bytes(body), method="POST")
+    req.add_header("Authorization", f"Bearer {api_key}")
+    req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
     req.add_header("User-Agent", "DorkPlus/1.0")
 
     try:
@@ -255,31 +734,73 @@ def openai_chat_request(endpoint, payload, stream=False):
 
 # ── OpenAI Image Generation ──────────────────────────────────────────────────
 
-def openai_image_generate(prompt, model="gpt-image-1", size="1024x1024"):
+def openai_image_generate(prompt, model="gpt-image-1", size="1024x1024", n=1):
     """Generate an image via OpenAI's image models."""
+    n = max(1, min(int(n or 1), 4))
     payload = {
         "model": model,
         "prompt": prompt,
-        "n": 1,
+        "n": n,
         "size": size,
-        "response_format": "b64_json",
     }
+    if model.startswith("gpt-image-"):
+        payload["output_format"] = "png"
+    else:
+        payload["response_format"] = "b64_json"
     result = openai_request("images/generations", payload)
     images = result.get("data", [])
     if not images:
         raise ValueError("No image returned from OpenAI")
 
-    b64 = images[0].get("b64_json", "")
-    if not b64:
+    saved = []
+    for i, img_data in enumerate(images):
+        b64 = img_data.get("b64_json", "")
+        if not b64:
+            continue
+        ts = int(time.time() * 1000)
+        mime = _detect_mime(b64)
+        ext = {"image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(mime, ".png")
+        filename = f"openai_{ts}_{i}{ext}"
+        filepath = IMAGES_DIR / filename
+        filepath.write_bytes(base64.b64decode(b64))
+        saved.append({"filename": filename, "url": f"/images/{filename}"})
+    if not saved:
         raise ValueError("No image data in response")
+    return {**saved[0], "images": saved}
 
-    ts = int(time.time() * 1000)
-    mime = _detect_mime(b64)
-    ext = {"image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(mime, ".png")
-    filename = f"openai_{ts}_0{ext}"
-    filepath = IMAGES_DIR / filename
-    filepath.write_bytes(base64.b64decode(b64))
-    return {"filename": filename, "url": f"/images/{filename}"}
+
+def openai_image_edit(prompt, image_data, model="gpt-image-1.5", size="1024x1024", n=1):
+    """Edit an image via OpenAI's image models."""
+    _, image_bytes, mime, _ = _reference_image_parts(image_data)
+    n = max(1, min(int(n or 1), 4))
+    ext = IMAGE_EXTENSIONS.get(mime, ".png")
+    fields = {
+        "model": model,
+        "prompt": prompt,
+        "n": n,
+        "size": size,
+        "output_format": "png",
+    }
+    result = openai_multipart_request(
+        "images/edits",
+        fields,
+        [("image", f"reference{ext}", mime, image_bytes)],
+    )
+    saved = []
+    for i, img_data in enumerate(result.get("data", [])):
+        b64 = img_data.get("b64_json", "")
+        if not b64:
+            continue
+        ts = int(time.time() * 1000)
+        emime = _detect_mime(b64)
+        eext = IMAGE_EXTENSIONS.get(emime, ".png")
+        filename = f"openai_edit_{ts}_{i}{eext}"
+        filepath = IMAGES_DIR / filename
+        filepath.write_bytes(base64.b64decode(b64))
+        saved.append({"filename": filename, "url": f"/images/{filename}"})
+    if not saved:
+        raise ValueError("No edited image data in OpenAI response")
+    return {**saved[0], "images": saved}
 
 
 # ── Collection Context Retrieval ──────────────────────────────────────────────
@@ -346,6 +867,69 @@ def fetch_collection_context(collection_ids, max_chars=80000):
     return "\n\n".join(parts)
 
 
+def _preview_key(key):
+    if not key:
+        return ""
+    return key[:8] + "..." + key[-4:] if len(key) > 12 else "set"
+
+
+def _dir_stats(directory, suffixes=None):
+    suffixes = tuple(s.lower() for s in suffixes) if suffixes else None
+    files = []
+    total_bytes = 0
+    for path in directory.iterdir():
+        if not path.is_file():
+            continue
+        if suffixes and path.suffix.lower() not in suffixes:
+            continue
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        total_bytes += stat.st_size
+        files.append({
+            "filename": path.name,
+            "modified": stat.st_mtime,
+            "bytes": stat.st_size,
+        })
+    files.sort(key=lambda item: item["modified"], reverse=True)
+    return {
+        "count": len(files),
+        "bytes": total_bytes,
+        "latest": files[0] if files else None,
+    }
+
+
+def _workspace_summary():
+    stats = {
+        "images": _dir_stats(IMAGES_DIR, [".png", ".jpg", ".jpeg", ".webp", ".gif"]),
+        "videos": _dir_stats(VIDEOS_DIR, [".mp4", ".mov", ".webm"]),
+        "audio": _dir_stats(AUDIO_DIR, [".mp3", ".wav", ".m4a", ".ogg"]),
+        "uploads": _dir_stats(UPLOADS_DIR),
+        "artifacts": _dir_stats(ARTIFACTS_DIR, [".html"]),
+        "skills": _dir_stats(SKILLS_DIR, [".md"]),
+    }
+    latest = []
+    for name, data in stats.items():
+        if data["latest"]:
+            latest.append({"type": name, **data["latest"]})
+    latest.sort(key=lambda item: item["modified"], reverse=True)
+    xai_key = get_api_key()
+    openai_key = get_openai_api_key()
+    return {
+        "app": "DORK+",
+        "data_dir": str(DATA_DIR),
+        "settings_dir": str(SETTINGS_DIR),
+        "api_keys": {
+            "xai": {"set": bool(xai_key), "preview": _preview_key(xai_key)},
+            "openai": {"set": bool(openai_key), "preview": _preview_key(openai_key)},
+        },
+        "stats": stats,
+        "latest": latest[:8],
+        "generated_at": time.time(),
+    }
+
+
 # ── Routes: Pages ────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -359,6 +943,8 @@ def index():
 def api_settings():
     if request.method == "GET":
         settings = load_settings()
+        settings.pop("xai_key", None)
+        settings.pop("openai_key", None)
         xai_key = os.environ.get("XAI_API_KEY", "")
         openai_key = os.environ.get("OPENAI_API_KEY", "")
         settings["xai_key_set"] = bool(xai_key)
@@ -374,9 +960,23 @@ def api_settings():
         return jsonify({"status": "ok"})
 
 
+@app.route("/api/workspace")
+def api_workspace():
+    return jsonify(_workspace_summary())
+
+
 @app.route("/api/models")
 def api_models():
-    return jsonify(MODELS)
+    models = dict(MODELS)
+    models["language"] = discover_language_models()
+    models["image"] = discover_generation_models("image-generation-models", MODELS["image"], fallback_tag="image", price_key="image_price")
+    models["video"] = discover_generation_models("video-generation-models", MODELS["video"], fallback_tag="video")
+    models["early_access_hints"] = EARLY_ACCESS_MODEL_HINTS
+    models["discovery"] = {
+        "live": bool(get_api_key()),
+        "note": "xAI image/video model lists are refreshed from your API key when available; bundled defaults are used as fallback.",
+    }
+    return jsonify(models)
 
 
 # ── Routes: Chat (Streaming SSE) ─────────────────────────────────────────────
@@ -384,11 +984,13 @@ def api_models():
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     data = request.json
-    model = data.get("model", "grok-4.20-beta-0309-non-reasoning")
-    messages = data.get("messages", [])
+    model = normalize_language_model(data.get("model", DEFAULT_CHAT_MODEL), allow_openai=True)
+    messages = sanitize_chat_messages(data.get("messages", []))
     system = data.get("system", "")
     temperature = data.get("temperature", 0.7)
     collection_ids = data.get("collection_ids", [])
+    requested_tools = data.get("tools", [])
+    reasoning = data.get("reasoning", {})
 
     system_parts = []
     if system:
@@ -402,10 +1004,14 @@ def api_chat():
             )
     system_text = "\n\n".join(system_parts) if system_parts else ""
 
-    # Multi-agent model uses /v1/responses endpoint (Responses API)
-    is_multi_agent = "multi-agent" in model
+    response_tools = build_xai_tools(requested_tools, collection_ids)
 
-    if is_multi_agent:
+    # Tool-enabled xAI chat and multi-agent models use /v1/responses.
+    is_multi_agent = "multi-agent" in model
+    is_openai = model.startswith("gpt-") or model.startswith("o3") or model.startswith("o4") or model.startswith("chatgpt-")
+    use_responses = (is_multi_agent or bool(response_tools)) and not is_openai
+
+    if use_responses:
         payload = {
             "model": model,
             "input": messages,
@@ -414,20 +1020,12 @@ def api_chat():
         }
         if system_text:
             payload["instructions"] = system_text
-        # Pass agents config from frontend, or use smart defaults
-        agents = data.get("agents")
-        if agents:
-            payload["agents"] = agents
-        else:
-            # Default agent team for multi-agent mode
-            payload["agents"] = [
-                {"name": "researcher", "model": "grok-4.20-beta-0309-non-reasoning",
-                 "instructions": "You are a thorough research specialist. Provide detailed, factual, well-sourced information. Be comprehensive."},
-                {"name": "coder", "model": "grok-code-fast-1",
-                 "instructions": "You are an expert programmer. Write clean, production-quality code with proper formatting. Use markdown code blocks with language tags."},
-                {"name": "creative", "model": "grok-4.20-beta-0309-non-reasoning",
-                 "instructions": "You are a creative writer and designer. Generate vivid, engaging, original content. Think outside the box."},
-            ]
+        if response_tools:
+            payload["tools"] = response_tools
+        if is_multi_agent:
+            effort = reasoning.get("effort", "low")
+            if effort in ("low", "medium", "high", "xhigh"):
+                payload["reasoning"] = {"effort": effort}
 
         def generate_multi_agent():
             try:
@@ -444,10 +1042,14 @@ def api_chat():
                             try:
                                 obj = json.loads(line[6:])
                                 evt_type = obj.get("type", "")
-                                if evt_type == "response.output_text.delta":
+                                if evt_type in ("response.output_text.delta", "response.refusal.delta"):
                                     delta = obj.get("delta", "")
                                     if delta:
                                         yield f"data: {json.dumps({'content': delta})}\n\n"
+                                elif evt_type == "response.reasoning_text.delta":
+                                    delta = obj.get("delta", "")
+                                    if delta:
+                                        yield f"data: {json.dumps({'reasoning': delta})}\n\n"
                                 elif evt_type == "response.completed":
                                     yield "data: [DONE]\n\n"
                                     return
@@ -462,9 +1064,6 @@ def api_chat():
             mimetype="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
         )
-
-    # Determine if this is an OpenAI model
-    is_openai = model.startswith("gpt-") or model.startswith("o3") or model.startswith("o4") or model.startswith("chatgpt-")
 
     # Standard chat/completions models
     payload = {
@@ -530,10 +1129,12 @@ def api_chat():
 @app.route("/api/chat/sync", methods=["POST"])
 def api_chat_sync():
     data = request.json
-    model = data.get("model", "grok-4.20-beta-0309-non-reasoning")
-    messages = data.get("messages", [])
+    model = normalize_language_model(data.get("model", DEFAULT_CHAT_MODEL), allow_openai=True)
+    messages = sanitize_chat_messages(data.get("messages", []))
     system = data.get("system", "")
     collection_ids = data.get("collection_ids", [])
+    requested_tools = data.get("tools", [])
+    reasoning = data.get("reasoning", {})
 
     system_parts = []
     if system:
@@ -548,20 +1149,25 @@ def api_chat_sync():
     system_text = "\n\n".join(system_parts) if system_parts else ""
 
     try:
-        if "multi-agent" in model:
+        response_tools = build_xai_tools(requested_tools, collection_ids)
+        is_openai = model.startswith("gpt-") or model.startswith("o3") or model.startswith("o4") or model.startswith("chatgpt-")
+        if ("multi-agent" in model or response_tools) and not is_openai:
             payload = {"model": model, "input": messages, "stream": False}
             if system_text:
                 payload["instructions"] = system_text
-            agents = data.get("agents")
-            if agents:
-                payload["agents"] = agents
+            if response_tools:
+                payload["tools"] = response_tools
+            if "multi-agent" in model:
+                effort = reasoning.get("effort", "low")
+                if effort in ("low", "medium", "high", "xhigh"):
+                    payload["reasoning"] = {"effort": effort}
             result = xai_request("responses", payload)
-            content = result["output"][0]["content"][0]["text"]
+            content = extract_response_text(result)
         else:
             payload = {"model": model, "messages": messages, "stream": False}
             if system_text:
                 payload["messages"] = [{"role": "system", "content": system_text}] + payload["messages"]
-            result = xai_request("chat/completions", payload)
+            result = openai_request("chat/completions", payload) if is_openai else xai_request("chat/completions", payload)
             content = result["choices"][0]["message"]["content"]
         return jsonify({"content": content})
     except Exception as e:
@@ -597,26 +1203,46 @@ def api_chat_sync_openai():
 def api_image_generate():
     data = request.json
     prompt = data.get("prompt", "")
-    model = data.get("model", "grok-imagine-image")
-    n = data.get("n", 1)
+    model = data.get("model", DEFAULT_IMAGE_MODEL)
+    n = _coerce_int(data.get("n", 1), 1, 1, 10)
+    resolution = _coerce_choice(data.get("resolution"), IMAGE_RESOLUTIONS, DEFAULT_IMAGE_RESOLUTION)
+    aspect_ratio = _coerce_choice(data.get("aspect_ratio"), IMAGE_ASPECT_RATIOS, DEFAULT_IMAGE_ASPECT_RATIO)
+    reference_b64 = data.get("reference", "")
 
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        payload = {"model": model, "prompt": prompt, "n": n, "response_format": "b64_json"}
+        final_prompt = prompt
+        if reference_b64:
+            try:
+                ref_mime = _detect_mime(reference_b64)
+                ref_uri = f"data:{ref_mime};base64,{reference_b64}"
+                vision_payload = {
+                    "model": "grok-4-1-fast-non-reasoning",
+                    "messages": [{"role": "user", "content": [
+                        {"type": "text", "text": "Describe this character/subject in precise visual detail for image generation consistency: exact appearance, hair color/style, eye color, skin tone, facial features, body type, clothing, distinctive marks, accessories, art style. Be specific and concise — 2-3 sentences max. ONLY describe what you see."},
+                        {"type": "image_url", "image_url": {"url": ref_uri}},
+                    ]}]
+                }
+                vision_result = xai_request("chat/completions", vision_payload)
+                char_desc = vision_result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                if char_desc:
+                    final_prompt = f"[CHARACTER REFERENCE — maintain exact appearance: {char_desc}] {prompt}"
+            except Exception:
+                pass
+
+        payload = {
+            "model": model,
+            "prompt": final_prompt,
+            "n": n,
+            "response_format": "b64_json",
+            "resolution": resolution,
+        }
+        if aspect_ratio:
+            payload["aspect_ratio"] = aspect_ratio
         result = xai_request("images/generations", payload)
-        saved = []
-        for i, img_data in enumerate(result.get("data", [])):
-            b64 = img_data.get("b64_json", "")
-            if b64:
-                ts = int(time.time() * 1000)
-                mime = _detect_mime(b64)
-                ext = {"image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(mime, ".png")
-                filename = f"img_{ts}_{i}{ext}"
-                filepath = IMAGES_DIR / filename
-                filepath.write_bytes(base64.b64decode(b64))
-                saved.append({"filename": filename, "url": f"/images/{filename}", "prompt": prompt, "model": model})
+        saved = _save_image_results(result, "img", final_prompt, model)
         return jsonify({"images": saved})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -629,13 +1255,37 @@ def api_image_generate_openai():
     prompt = data.get("prompt", "")
     model = data.get("model", "gpt-image-1")
     size = data.get("size", "1024x1024")
+    n = data.get("n", 1)
 
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        result = openai_image_generate(prompt, model=model, size=size)
-        return jsonify({"images": [{"filename": result["filename"], "url": result["url"], "prompt": prompt, "model": model}]})
+        result = openai_image_generate(prompt, model=model, size=size, n=n)
+        return jsonify({"images": [{**img, "prompt": prompt, "model": model} for img in result["images"]]})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/image/edit-openai", methods=["POST"])
+def api_image_edit_openai():
+    """Edit image via OpenAI image models."""
+    data = request.json
+    prompt = data.get("prompt", "")
+    model = data.get("model", "gpt-image-1.5")
+    image_b64 = data.get("image", "")
+    size = data.get("size", "1024x1024")
+    n = data.get("n", 1)
+
+    if not prompt or not image_b64:
+        return jsonify({"error": "Prompt and image required"}), 400
+
+    try:
+        result = openai_image_edit(prompt, image_b64, model=model, size=size, n=n)
+        return jsonify({"images": [{**img, "prompt": prompt, "model": model} for img in result["images"]]})
+    except ValueError as e:
+        status = 400 if str(e).startswith("Reference image") else 500
+        return jsonify({"error": str(e)}), status
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -644,36 +1294,113 @@ def api_image_generate_openai():
 def api_image_edit():
     data = request.json
     prompt = data.get("prompt", "")
-    model = data.get("model", "grok-imagine-image")
+    model = data.get("model", DEFAULT_IMAGE_MODEL)
     image_b64 = data.get("image", "")
+    resolution = _coerce_choice(data.get("resolution"), IMAGE_RESOLUTIONS, DEFAULT_IMAGE_RESOLUTION)
+    aspect_ratio = _coerce_choice(data.get("aspect_ratio"), IMAGE_ASPECT_RATIOS, DEFAULT_IMAGE_ASPECT_RATIO)
 
     if not prompt or not image_b64:
         return jsonify({"error": "Prompt and image required"}), 400
 
     try:
-        # xAI expects image as data URI object, not raw base64
-        mime = _detect_mime(image_b64)
-        data_uri = f"data:{mime};base64,{image_b64}"
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "image": {"url": data_uri, "type": "image_url"},
-            "n": 1,
-            "response_format": "b64_json",
-        }
-        result = xai_request("images/edits", payload)
-        saved = []
-        for i, img_data in enumerate(result.get("data", [])):
-            b64 = img_data.get("b64_json", "")
-            if b64:
-                ts = int(time.time() * 1000)
-                emime = _detect_mime(b64)
-                eext = {"image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(emime, ".png")
-                filename = f"edit_{ts}_{i}{eext}"
-                filepath = IMAGES_DIR / filename
-                filepath.write_bytes(base64.b64decode(b64))
-                saved.append({"filename": filename, "url": f"/images/{filename}", "prompt": prompt, "model": model})
+        if model.startswith("gpt-"):
+            result = openai_image_edit(prompt, image_b64, model=model, size=data.get("size", "1024x1024"))
+            return jsonify({"images": [{**img, "prompt": prompt, "model": model} for img in result["images"]]})
+
+        if not model.startswith("grok-imagine-image"):
+            model = DEFAULT_IMAGE_MODEL
+
+        # xAI edits are picky: send PNG/JPEG data URIs, converting WebP/large refs.
+        data_uri = _xai_reference_data_uri(image_b64)
+        settings = {"resolution": resolution}
+        if aspect_ratio and aspect_ratio != "auto":
+            settings["aspect_ratio"] = aspect_ratio
+        result = _xai_image_edit(model, prompt, data_uri, settings)
+        saved = _save_image_results(result, "edit", prompt, model)
         return jsonify({"images": saved})
+    except ValueError as e:
+        status = 400 if str(e).startswith("Reference image") else 500
+        return jsonify({"error": str(e)}), status
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/image/combine", methods=["POST"])
+def api_image_combine():
+    """Combine two images using edit API (preserves character consistency from image 1)."""
+    data = request.json
+    image1_b64 = data.get("image1", "")
+    image2_b64 = data.get("image2", "")
+    user_prompt = data.get("prompt", "")
+
+    if not image1_b64 or not image2_b64:
+        return jsonify({"error": "Two images required"}), 400
+
+    try:
+        mime2 = _detect_mime(image2_b64)
+        uri2 = f"data:{mime2};base64,{image2_b64}"
+
+        analysis_prompt = "Describe the key visual elements, subjects, style, mood, colors, and thematic content of this image in 2-3 concise sentences. Focus on what makes it distinctive — characters, objects, environment, aesthetic. Be specific and vivid."
+        vision_payload = {
+            "model": "grok-4-1-fast-non-reasoning",
+            "messages": [{"role": "user", "content": [
+                {"type": "text", "text": analysis_prompt},
+                {"type": "image_url", "image_url": {"url": uri2}},
+            ]}]
+        }
+        vision_result = xai_request("chat/completions", vision_payload)
+        img2_desc = vision_result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+
+        fusion_prompt = f"Fuse the following elements into this image while preserving the existing characters and subjects exactly as they appear: {img2_desc}"
+        if user_prompt:
+            fusion_prompt += f". Style direction: {user_prompt}"
+
+        mime1 = _detect_mime(image1_b64)
+        data_uri = _xai_reference_data_uri(image1_b64)
+        result = _xai_image_edit(DEFAULT_IMAGE_MODEL, fusion_prompt, data_uri, {"resolution": DEFAULT_IMAGE_RESOLUTION})
+        saved = _save_image_results(result, "fusion", fusion_prompt, DEFAULT_IMAGE_MODEL)
+        return jsonify({"images": saved, "fusion_prompt": fusion_prompt})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/image/combine-characters", methods=["POST"])
+def api_image_combine_characters():
+    """Combine characters from two images into a new scene preserving both faces."""
+    data = request.json
+    image1_b64 = data.get("image1", "")
+    image2_b64 = data.get("image2", "")
+    scene_prompt = data.get("prompt", "")
+
+    if not image1_b64 or not image2_b64:
+        return jsonify({"error": "Two images required"}), 400
+
+    try:
+        mime1 = _detect_mime(image1_b64)
+        mime2 = _detect_mime(image2_b64)
+        uri1 = f"data:{mime1};base64,{image1_b64}"
+        uri2 = f"data:{mime2};base64,{image2_b64}"
+
+        char_prompt = "Describe each character/person in these two images with EXTREME precision for visual consistency. For EACH character: exact face shape, eye color/shape, nose, lips, skin tone, hair color/style/length, body build, height impression, clothing, accessories, any distinguishing marks. Label them Character A (image 1) and Character B (image 2). Be exhaustive — this description will be used to recreate them exactly. 4-5 sentences per character."
+
+        vision_payload = {
+            "model": "grok-4-1-fast-non-reasoning",
+            "messages": [{"role": "user", "content": [
+                {"type": "text", "text": char_prompt},
+                {"type": "image_url", "image_url": {"url": uri1}},
+                {"type": "image_url", "image_url": {"url": uri2}},
+            ]}]
+        }
+        vision_result = xai_request("chat/completions", vision_payload)
+        char_descriptions = vision_result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+
+        scene = scene_prompt or "both characters together in the same scene, interacting naturally"
+        edit_prompt = f"Add the second character into this image while preserving the EXACT face and appearance of the existing character. {char_descriptions}\n\nScene: {scene}. Both characters must appear with their exact original faces, features, and proportions."
+
+        data_uri = _xai_reference_data_uri(image1_b64)
+        result = _xai_image_edit(DEFAULT_IMAGE_MODEL, edit_prompt, data_uri, {"resolution": DEFAULT_IMAGE_RESOLUTION})
+        saved = _save_image_results(result, "charcombo", edit_prompt[:200], DEFAULT_IMAGE_MODEL)
+        return jsonify({"images": saved, "characters": char_descriptions[:500]})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -718,12 +1445,24 @@ def api_video_generate():
     data = request.json
     prompt = data.get("prompt", "")
     image_b64 = data.get("image", "")
+    model = data.get("model", DEFAULT_VIDEO_MODEL)
+    if not model or not model.startswith("grok-imagine-video"):
+        model = DEFAULT_VIDEO_MODEL
+    duration = _coerce_int(data.get("duration"), DEFAULT_VIDEO_DURATION, 1, 15)
+    resolution = _coerce_choice(data.get("resolution"), VIDEO_RESOLUTIONS, DEFAULT_VIDEO_RESOLUTION)
+    aspect_ratio = _coerce_choice(data.get("aspect_ratio"), VIDEO_ASPECT_RATIOS, DEFAULT_VIDEO_ASPECT_RATIO)
 
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        payload = {"model": "grok-imagine-video", "prompt": prompt}
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "duration": duration,
+            "resolution": resolution,
+            "aspect_ratio": aspect_ratio,
+        }
         if image_b64:
             # Detect actual MIME from base64 header bytes
             mime = _detect_mime(image_b64)
@@ -768,7 +1507,7 @@ def api_video_poll():
                         break
 
             if not video_url:
-                return jsonify({"error": "Video done but no download URL found"}), 500
+                return jsonify({"status": "processing", "detail": "Video finished; waiting for download URL"})
 
             ts = int(time.time() * 1000)
             filename = f"video_{ts}.mp4"
@@ -807,6 +1546,53 @@ def api_video_freeze():
     filepath = IMAGES_DIR / filename
     filepath.write_bytes(base64.b64decode(image_data))
     return jsonify({"filename": filename, "url": f"/images/{filename}"})
+
+
+@app.route("/api/video/lastframe", methods=["POST"])
+def api_video_lastframe():
+    """Extract the last frame from a video file and save as an image."""
+    data = request.json
+    filename = data.get("filename", "")
+    if not filename:
+        return jsonify({"error": "Filename required"}), 400
+    video_path = VIDEOS_DIR / Path(filename).name
+    if not video_path.exists():
+        return jsonify({"error": "Video not found"}), 404
+
+    ts = int(time.time() * 1000)
+    frame_filename = f"frame_{ts}.png"
+    frame_path = IMAGES_DIR / frame_filename
+
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-sseof", "-0.1", "-i", str(video_path),
+             "-update", "1", "-frames:v", "1", str(frame_path)],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode != 0 or not frame_path.exists():
+            result = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)],
+                capture_output=True, text=True, timeout=10
+            )
+            duration = float(result.stdout.strip()) - 0.05
+            subprocess.run(
+                ["ffmpeg", "-y", "-ss", str(max(0, duration)), "-i", str(video_path),
+                 "-frames:v", "1", str(frame_path)],
+                capture_output=True, text=True, timeout=30
+            )
+
+        if not frame_path.exists():
+            return jsonify({"error": "Failed to extract frame"}), 500
+
+        frame_b64 = base64.b64encode(frame_path.read_bytes()).decode()
+        return jsonify({
+            "filename": frame_filename,
+            "url": f"/images/{frame_filename}",
+            "base64": frame_b64,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/video/delete", methods=["POST"])
@@ -1305,6 +2091,149 @@ def api_delete():
         filepath.unlink()
         return jsonify({"status": "deleted"})
     return jsonify({"error": "Not found"}), 404
+
+
+# ── Asset Library (Characters + Styles, ported from dork+ios) ───────────────
+# Persistent character/style references with active toggles. Active items
+# auto-attach to image and video generations as reference images.
+
+def _asset_lib_load():
+    if ASSET_LIB_INDEX.exists():
+        try:
+            return json.loads(ASSET_LIB_INDEX.read_text())
+        except Exception:
+            pass
+    return {"items": []}
+
+
+def _asset_lib_save(data):
+    ASSET_LIB_INDEX.write_text(json.dumps(data, indent=2))
+
+
+def _asset_lib_ext_from_data_url(data_url):
+    low = (data_url or "").lower()
+    if low.startswith("data:image/jpeg") or low.startswith("data:image/jpg"):
+        return "jpg"
+    if low.startswith("data:image/webp"):
+        return "webp"
+    if low.startswith("data:image/gif"):
+        return "gif"
+    return "png"
+
+
+def _asset_lib_mime_from_ext(ext):
+    return {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+            "webp": "image/webp", "gif": "image/gif"}.get(ext.lower(), "image/png")
+
+
+@app.route("/api/asset-library", methods=["GET"])
+def api_asset_lib_list():
+    return jsonify(_asset_lib_load())
+
+
+@app.route("/api/asset-library", methods=["POST"])
+def api_asset_lib_add():
+    data = request.json or {}
+    name = (data.get("name") or "Untitled").strip()[:60] or "Untitled"
+    asset_type = data.get("type", "character")
+    if asset_type not in ("character", "style"):
+        asset_type = "character"
+    tags = (data.get("tags") or "").strip()
+    image_data = data.get("image", "") or ""
+    if not image_data:
+        return jsonify({"error": "no image"}), 400
+    orig = image_data
+    if image_data.startswith("data:") and "," in image_data:
+        image_data = image_data.split(",", 1)[1]
+    ext = _asset_lib_ext_from_data_url(orig)
+    item_id = uuid.uuid4().hex[:12]
+    fname = f"{item_id}.{ext}"
+    fpath = ASSET_LIB_DIR / fname
+    try:
+        fpath.write_bytes(base64.b64decode(image_data))
+    except Exception as e:
+        return jsonify({"error": f"file write: {e}"}), 500
+    idx = _asset_lib_load()
+    item = {"id": item_id, "name": name, "type": asset_type, "tags": tags,
+            "file": fname, "created": int(time.time()), "active": False}
+    idx["items"].insert(0, item)
+    _asset_lib_save(idx)
+    return jsonify(item)
+
+
+@app.route("/api/asset-library/toggle", methods=["POST"])
+def api_asset_lib_toggle():
+    data = request.json or {}
+    iid = data.get("id")
+    idx = _asset_lib_load()
+    target = next((i for i in idx["items"] if i["id"] == iid), None)
+    if not target:
+        return jsonify({"error": "not found"}), 404
+    target["active"] = not target.get("active", False)
+    _asset_lib_save(idx)
+    return jsonify(idx)
+
+
+@app.route("/api/asset-library/rename", methods=["POST"])
+def api_asset_lib_rename():
+    data = request.json or {}
+    idx = _asset_lib_load()
+    item = next((i for i in idx["items"] if i["id"] == data.get("id")), None)
+    if not item:
+        return jsonify({"error": "not found"}), 404
+    item["name"] = (data.get("name") or "Untitled").strip()[:60]
+    if "tags" in data:
+        item["tags"] = (data.get("tags") or "")
+    _asset_lib_save(idx)
+    return jsonify(item)
+
+
+@app.route("/api/asset-library/delete", methods=["POST"])
+def api_asset_lib_delete():
+    data = request.json or {}
+    iid = data.get("id")
+    if not iid:
+        return jsonify({"error": "no id"}), 400
+    idx = _asset_lib_load()
+    item = next((i for i in idx["items"] if i["id"] == iid), None)
+    if item:
+        fpath = ASSET_LIB_DIR / item["file"]
+        if fpath.exists():
+            try:
+                fpath.unlink()
+            except Exception:
+                pass
+        idx["items"] = [i for i in idx["items"] if i["id"] != iid]
+        _asset_lib_save(idx)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/asset-library/dataurl/<item_id>")
+def api_asset_lib_dataurl(item_id):
+    idx = _asset_lib_load()
+    item = next((i for i in idx["items"] if i["id"] == item_id), None)
+    if not item:
+        return jsonify({"error": "not found"}), 404
+    fpath = ASSET_LIB_DIR / item["file"]
+    if not fpath.exists():
+        return jsonify({"error": "file missing"}), 404
+    raw = fpath.read_bytes()
+    ext = item["file"].rsplit(".", 1)[-1].lower()
+    mime = _asset_lib_mime_from_ext(ext)
+    b64 = base64.b64encode(raw).decode("ascii")
+    return jsonify({"data_url": f"data:{mime};base64,{b64}"})
+
+
+@app.route("/asset-library/<item_id>")
+def asset_lib_serve(item_id):
+    idx = _asset_lib_load()
+    item = next((i for i in idx["items"] if i["id"] == item_id), None)
+    if not item:
+        return ("", 404)
+    fpath = ASSET_LIB_DIR / item["file"]
+    if not fpath.exists():
+        return ("", 404)
+    return send_from_directory(str(ASSET_LIB_DIR), item["file"])
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

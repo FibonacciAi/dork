@@ -5,6 +5,10 @@
 
 // ── Skins ────────────────────────────────────────────────────────────────────
 const SKINS = {
+    nova: {
+        name: 'Nova', preview: '#2dd4bf',
+        vars: { '--bg-deep':'#050609','--bg-base':'#0b0f14','--bg-surface':'#101820','--bg-card':'#14202a','--bg-elevated':'#192735','--bg-hover':'#223442','--border':'rgba(125,211,252,0.12)','--border-active':'rgba(45,212,191,0.32)','--border-bright':'rgba(251,191,36,0.42)','--accent':'#2dd4bf','--accent-bright':'#7dd3fc','--accent-dim':'#0f766e','--accent-glow':'rgba(45,212,191,0.14)','--accent-glow-strong':'rgba(125,211,252,0.24)','--accent-2':'#fbbf24','--accent-3':'#fb7185','--btn-text':'#061012' }
+    },
     violet: {
         name: 'Violet', preview: '#7c5cfc',
         vars: { '--bg-deep':'#030308','--bg-base':'#08081a','--bg-surface':'#0d0d22','--bg-card':'#12122a','--bg-elevated':'#181834','--bg-hover':'#1e1e3e','--border':'rgba(124,92,252,0.10)','--border-active':'rgba(124,92,252,0.30)','--border-bright':'rgba(124,92,252,0.50)','--accent':'#7c5cfc','--accent-bright':'#9b82ff','--accent-dim':'#5a3fd6','--accent-glow':'rgba(124,92,252,0.15)','--accent-glow-strong':'rgba(124,92,252,0.30)','--accent-2':'#c084fc','--accent-3':'#f472b6' }
@@ -55,7 +59,7 @@ function applySkin(skinId) {
 function renderSkinPicker() {
     const picker = document.getElementById('skin-picker');
     if (!picker) return;
-    const current = localStorage.getItem('dork-skin') || 'violet';
+    const current = localStorage.getItem('dork-skin') || 'nova';
     picker.innerHTML = Object.entries(SKINS).map(([id, skin]) =>
         `<button class="skin-swatch ${id === current ? 'active' : ''}" data-skin="${id}" onclick="applySkin('${id}')" title="${skin.name}">
             <span class="skin-color" style="background:${skin.preview}"></span>
@@ -64,6 +68,119 @@ function renderSkinPicker() {
     ).join('');
     applySkin(current);
 }
+
+const IMAGE_STYLE_PRESETS = [
+    // Photo, cinema, and raw camera looks
+    { id: 'runway-flash',          name: 'Runway Flash',        tag: 'fashion', colors: ['#f8fafc', '#ef4444'], prompt: 'fashion week flash photo, hard direct strobe, glossy skin highlights, sharp wardrobe texture, crowded backstage energy, expensive editorial crop' },
+    { id: 'tabloid-night',         name: 'Tabloid Night',       tag: 'flash',   colors: ['#facc15', '#ec4899'], prompt: 'paparazzi night flash, luxury chaos, wet pavement, blown highlights, candid celebrity-scandal framing, high contrast magazine grit' },
+    { id: 'noir-rain',             name: 'Noir Rain',           tag: 'cinema',  colors: ['#22d3ee', '#111827'], prompt: 'rain-soaked noir street, neon reflected in puddles, trenchcoat silhouettes, sodium vapor haze, wet glass, moody crime-film lighting' },
+    { id: 'sunbleach-35',          name: 'Sunbleach 35',        tag: 'film',    colors: ['#fbbf24', '#38bdf8'], prompt: 'sun-bleached 35mm film, harsh summer light, faded cyan shadows, warm grain, imperfect travel-photo realism, tactile dust and scratches' },
+    { id: 'phone-cam-raw',         name: 'Phone-Cam Raw',       tag: 'real',    colors: ['#a3e635', '#64748b'], prompt: 'unpolished phone camera realism, accidental flash, slightly awkward angle, real room clutter, candid modern snapshot, believable social feed texture' },
+    { id: 'museum-mono',           name: 'Museum Mono',         tag: 'b&w',     colors: ['#f8fafc', '#18181b'], prompt: 'large-format black-and-white museum print, sculptural shadows, deep blacks, silver grain, quiet negative space, gallery-grade tonal control' },
+    { id: 'infrared-dream',        name: 'Infrared Dream',      tag: 'ir',      colors: ['#f9a8d4', '#f8fafc'], prompt: 'false-color infrared photography, white foliage, black skies, surreal pink highlights, uncanny daylight, crisp lens detail' },
+    { id: 'underwater-flash',      name: 'Underwater Flash',    tag: 'aqua',    colors: ['#06b6d4', '#f97316'], prompt: 'underwater flash photography, suspended bubbles, refracted skin and fabric, pool-blue shadows, sharp strobe highlights, dreamlike submerged motion' },
+    { id: 'macro-slick',           name: 'Macro Slick',         tag: 'macro',   colors: ['#dc2626', '#fbbf24'], prompt: 'extreme macro product-beauty shot, wet gloss, tiny droplets, precise focus falloff, tactile surface detail, premium cosmetics lighting' },
+    { id: 'airport-thriller',      name: 'Airport Thriller',    tag: 'cinema',  colors: ['#64748b', '#facc15'], prompt: 'sleek airport-thriller still, glass terminals, anonymous crowds, rolling luggage, cool overhead light, surveillance-era tension' },
+    // Genre engines
+    { id: 'chrome-dystopia',       name: 'Chrome Dystopia',     tag: 'sci-fi',  colors: ['#94a3b8', '#22d3ee'], prompt: 'chrome dystopian future, polished metal corridors, cold blue light, biometric doors, reflective armor, sterile corporate menace' },
+    { id: 'desert-megafauna',      name: 'Desert Colossus',     tag: 'epic',    colors: ['#f59e0b', '#0f172a'], prompt: 'sun-blasted desert epic, gigantic ancient machinery half-buried in dunes, tiny travelers, dusty atmosphere, brutal scale' },
+    { id: 'arctic-espionage',      name: 'Arctic Espionage',    tag: 'spy',     colors: ['#bae6fd', '#334155'], prompt: 'arctic spy-film scene, whiteout snow, black tactical silhouettes, frozen radar station, cold blue grade, clean suspense composition' },
+    { id: 'inferno-practical',     name: 'Inferno Practical',   tag: 'fire',    colors: ['#f97316', '#111827'], prompt: 'practical firelight cinema, smoke layers, ember particles, orange rim light, charred industrial set, intense physical atmosphere' },
+    { id: 'cosmic-dread',          name: 'Cosmic Dread',        tag: 'dread',   colors: ['#22d3ee', '#312e81'], prompt: 'cosmic dread tableau, impossible architecture, cold starlight, tiny human scale, elegant terror, vast negative space' },
+    { id: 'analog-entity',         name: 'Analog Entity',       tag: 'horror',  colors: ['#facc15', '#334155'], prompt: 'degraded broadcast horror still, tracking noise, washed color, empty hallway, wrong silhouette in the frame, unsettling archival texture' },
+    { id: 'grindhouse-pulp',       name: 'Grindhouse Pulp',     tag: 'pulp',    colors: ['#dc2626', '#fde68a'], prompt: 'grindhouse poster energy, lurid painted lighting, torn paper texture, dramatic faces, cheap-thrill color, bold action staging, no text' },
+    { id: 'cyber-shrine',          name: 'Cyber Shrine',        tag: 'neon',    colors: ['#a855f7', '#22c55e'], prompt: 'neon shrine interior, tangled cables, glowing offerings, incense haze, old ritual objects mixed with illegal future tech' },
+    { id: 'biotech-lab',           name: 'Biotech Lab',         tag: 'bio',     colors: ['#84cc16', '#22d3ee'], prompt: 'wet biotech laboratory, glass tanks, translucent membranes, surgical light, green diagnostic glow, sterile horror beauty' },
+    // Illustration and graphic systems
+    { id: 'anime-trailer',         name: 'Anime Trailer',       tag: 'anime',   colors: ['#f472b6', '#06b6d4'], prompt: 'high-budget anime trailer frame, cinematic backlight, crisp cel shading, wind-blown detail, emotional close-up, dynamic camera angle' },
+    { id: 'manga-splash',          name: 'Manga Splash',        tag: 'manga',   colors: ['#111827', '#f8fafc'], prompt: 'black-and-white manga splash page, explosive composition, screentone gradients, speed lines, expressive ink, oversized dramatic silhouette' },
+    { id: 'euro-comic',            name: 'Euro Comic',          tag: 'comic',   colors: ['#2563eb', '#f97316'], prompt: 'European graphic novel illustration, clean ligne-claire linework, flat confident color, architectural detail, elegant adventure-panel framing' },
+    { id: 'risograph-zine',        name: 'Risograph Zine',      tag: 'print',   colors: ['#ef4444', '#22c55e'], prompt: 'two-color risograph zine print, misregistered ink, grainy paper, DIY layout energy, bold shapes, tactile underground poster finish' },
+    { id: 'airbrush-metal',        name: 'Airbrush Metal',      tag: 'retro',   colors: ['#cbd5e1', '#ec4899'], prompt: 'retro airbrush metal illustration, chrome gradients, glossy highlights, fantasy poster drama, soft sprayed edges, 1980s cover-art attitude' },
+    { id: 'clay-nightmare',        name: 'Clay Nightmare',      tag: 'craft',   colors: ['#fb923c', '#7c3aed'], prompt: 'stop-motion clay nightmare, handmade miniature set, fingerprints in material, practical shadows, tactile uncanny character design' },
+    { id: 'ink-brutal',            name: 'Ink Brutal',          tag: 'ink',     colors: ['#f8fafc', '#ef4444'], prompt: 'brutal black ink illustration, scratchy dry-brush marks, aggressive contrast, torn poster edge, underground gig-poster intensity' },
+    { id: 'storybook-ominous',     name: 'Ominous Storybook',   tag: 'paint',   colors: ['#86efac', '#7c2d12'], prompt: 'hand-painted storybook scene with a dark undertone, lush background detail, soft gouache texture, charming but uneasy composition' },
+    // Design, objects, and surrealism
+    { id: 'object-worship',        name: 'Object Worship',      tag: 'object',  colors: ['#facc15', '#111827'], prompt: 'single hero object treated like a religious artifact, dramatic pedestal light, velvet shadows, obsessively polished material detail' },
+    { id: 'liquid-metal',          name: 'Liquid Metal',        tag: 'chrome',  colors: ['#e5e7eb', '#22d3ee'], prompt: 'liquid metal surface design, flowing chrome, mirror distortions, sharp studio reflections, futuristic luxury product mood' },
+    { id: 'velvet-brutalism',      name: 'Velvet Brutalism',    tag: 'design',  colors: ['#7f1d1d', '#94a3b8'], prompt: 'raw concrete architecture softened by red velvet, hard geometry, luxurious tension, museum-scale lighting, severe composition' },
+    { id: 'neon-taxidermy',        name: 'Neon Specimen',       tag: 'specimen',colors: ['#84cc16', '#ec4899'], prompt: 'glowing specimen display, glass case, colored gel lights, scientific labels implied but unreadable, uncanny collector-room mood' },
+    { id: 'botanical-takeover',    name: 'Botanical Takeover',  tag: 'lush',    colors: ['#16a34a', '#f472b6'], prompt: 'plants aggressively reclaiming an interior, roots through furniture, saturated flowers, damp plaster, beautiful overgrowth chaos' },
+    { id: 'surreal-runway',        name: 'Surreal Runway',      tag: 'surreal', colors: ['#a855f7', '#f97316'], prompt: 'surreal runway editorial, impossible garment shape, dreamlike set, sculptural pose, clean high-fashion lighting, art-magazine confidence' },
+    { id: 'candy-horror',          name: 'Candy Horror',        tag: 'horror',  colors: ['#f472b6', '#84cc16'], prompt: 'candy-colored horror scene, glossy sweets, bright plastic surfaces, unsettling smile, cheerful palette turned wrong, polished pop-nightmare look' },
+    { id: 'ritual-gold',           name: 'Ritual Gold',         tag: 'ritual',  colors: ['#facc15', '#581c87'], prompt: 'ritual chamber with gold objects, candle smoke, dark purple shadows, ornate symbols, sacred-luxury atmosphere, cinematic symmetry' },
+    { id: 'glass-dream',           name: 'Glass Dream',         tag: 'glass',   colors: ['#bae6fd', '#f8fafc'], prompt: 'transparent glass world, refracted light, delicate edges, floating reflections, clean surreal product-cinema finish' },
+    { id: 'dirty-future',          name: 'Dirty Future',        tag: 'future',  colors: ['#f97316', '#334155'], prompt: 'lived-in future street market, tangled wires, grease, handmade repairs, steam, neon signs, dense believable sci-fi texture' },
+    { id: 'blacklight-poster',     name: 'Blacklight Poster',   tag: 'poster',  colors: ['#a855f7', '#22c55e'], prompt: 'blacklight poster art, fluorescent ink, cosmic shapes, velvet-black background, psychedelic glow, crisp centered composition, no text' },
+];
+
+const ADULT_IMAGE_STYLE_PRESETS = [
+    // Latex, rubber, and glossy fetishwear
+    { id: 'adult-latex-catsuit',        name: 'Latex Catsuit',        tag: 'latex',   adult: true, colors: ['#020617', '#e11d48'], prompt: 'mirror-gloss latex catsuit, tight silhouette, hard rim light, black studio backdrop, fetish magazine polish' },
+    { id: 'adult-rubber-doll',          name: 'Rubber Doll',          tag: 'rubber',  adult: true, colors: ['#111827', '#f472b6'], prompt: 'full rubber doll styling, glossy hood, exaggerated shine, polished studio light, unreal mannequin pose, high-fetish fashion finish' },
+    { id: 'adult-latex-gloves',         name: 'Latex Gloves',         tag: 'gloves',  adult: true, colors: ['#0f172a', '#22d3ee'], prompt: 'long latex gloves, wet black shine, fingers posed near lips, tight beauty crop, cool clinical highlights' },
+    { id: 'adult-vinyl-mini',           name: 'Vinyl Mini',           tag: 'vinyl',   adult: true, colors: ['#ec4899', '#111827'], prompt: 'glossy vinyl mini dress, nightclub flash, slick reflections, high heels, confident adult fashion pose' },
+    { id: 'adult-clear-pvc',            name: 'Clear PVC',            tag: 'pvc',     adult: true, colors: ['#bae6fd', '#f8fafc'], prompt: 'transparent PVC layers over lingerie, condensation shine, icy studio light, futuristic fetish editorial styling' },
+    { id: 'adult-rubber-clinic',        name: 'Rubber Clinic',        tag: 'latex',   adult: true, colors: ['#e5e7eb', '#22d3ee'], prompt: 'sterile rubber clinic scene, latex apron and gloves, surgical white light, chrome table, clinical fetish atmosphere' },
+    // Leather, dominance, and dungeon styling
+    { id: 'adult-leather-domme',        name: 'Leather Domme',        tag: 'domme',   adult: true, colors: ['#0f172a', '#dc2626'], prompt: 'tailored black leather, riding crop prop, severe key light, commanding pose, dungeon-editorial power' },
+    { id: 'adult-dungeon-noir',         name: 'Dungeon Noir',         tag: 'bdsm',    adult: true, colors: ['#111827', '#7f1d1d'], prompt: 'private dungeon room, red practical lights, leather bench, chains on wall, noir shadows, expensive kink-club mood' },
+    { id: 'adult-collar-leash',         name: 'Collar & Leash',       tag: 'collar',  adult: true, colors: ['#020617', '#f43f5e'], prompt: 'leather collar, chain leash prop, glossy lips, close controlled framing, power-exchange fashion styling' },
+    { id: 'adult-throne-domme',         name: 'Throne Domme',         tag: 'domme',   adult: true, colors: ['#7f1d1d', '#facc15'], prompt: 'dominant figure on a velvet throne, thigh-high boots, leather gloves, low red light, worshipful composition' },
+    { id: 'adult-keyholder',            name: 'Keyholder',            tag: 'power',   adult: true, colors: ['#facc15', '#0f172a'], prompt: 'small gold key on black leather glove, collar detail, teasing close-up, luxurious control-symbol still life' },
+    { id: 'adult-cage-set',             name: 'Cage Set',             tag: 'bdsm',    adult: true, colors: ['#64748b', '#ef4444'], prompt: 'industrial cage set, red club light, leather outfit, steel bars as graphic shadows, adult kink editorial scene' },
+    // Bondage, restraint, and rope
+    { id: 'adult-rope-bondage',         name: 'Rope Bondage',         tag: 'rope',    adult: true, colors: ['#7c2d12', '#fde68a'], prompt: 'intricate shibari rope patterns, warm light, calm poised body line, rope geometry as the main visual focus' },
+    { id: 'adult-suspension-lines',     name: 'Suspension Lines',     tag: 'rope',    adult: true, colors: ['#fbbf24', '#111827'], prompt: 'rope suspension rigging as sculptural lines, black void background, dramatic spotlight, controlled gallery-installation mood' },
+    { id: 'adult-cuffs-chains',         name: 'Cuffs & Chains',       tag: 'cuffs',   adult: true, colors: ['#94a3b8', '#111827'], prompt: 'polished wrist cuffs, chain detail, black leather surface, close crop, metallic highlights, restraint-fashion still' },
+    { id: 'adult-blindfold',            name: 'Blindfold',            tag: 'sensory', adult: true, colors: ['#020617', '#f8fafc'], prompt: 'black silk blindfold, parted lips, soft side light, close intimate portrait, sensory-deprivation styling' },
+    { id: 'adult-spreader-bar',         name: 'Spreader Bar',         tag: 'restraint',adult: true, colors: ['#e5e7eb', '#7f1d1d'], prompt: 'chrome restraint bar detail, leather straps, dramatic low light, fetish equipment photographed like luxury product design' },
+    { id: 'adult-straitjacket',         name: 'Straitjacket',         tag: 'restraint',adult: true, colors: ['#f8fafc', '#64748b'], prompt: 'white canvas restraint jacket, fashion-institution set, stark light, tightly controlled pose, avant-garde kink editorial' },
+    // Legs, feet, boots, and hosiery
+    { id: 'adult-hosiery-heels',        name: 'Hosiery & Heels',      tag: 'legs',    adult: true, colors: ['#111827', '#fda4af'], prompt: 'sheer stockings, garter details, lacquered high heels, low-angle leg-focused fashion shot, satin bedding' },
+    { id: 'adult-stockings-garter',     name: 'Stockings & Garter',   tag: 'hosiery', adult: true, colors: ['#020617', '#f9a8d4'], prompt: 'garter belt, stocking tops, lace texture, soft boudoir light, cropped thigh-focused glamour composition' },
+    { id: 'adult-thigh-high-boots',     name: 'Thigh-High Boots',     tag: 'boots',   adult: true, colors: ['#111827', '#facc15'], prompt: 'black thigh-high boots, glossy heel, strong stance, low camera angle, club-floor reflections, fetish footwear focus' },
+    { id: 'adult-feet',                 name: 'Feet',                 tag: 'feet',    adult: true, colors: ['#fbbf24', '#fda4af'], prompt: 'pedicure detail, high heels slipped off, silk sheets, elegant foot-focused glamour close-up' },
+    { id: 'adult-soles-closeup',        name: 'Soles Close-Up',       tag: 'feet',    adult: true, colors: ['#fde68a', '#111827'], prompt: 'bare soles close to lens, soft sheets behind, shallow focus, warm lamp light, clean foot-fetish composition' },
+    { id: 'adult-shoe-worship',         name: 'Shoe Worship',         tag: 'heels',   adult: true, colors: ['#dc2626', '#020617'], prompt: 'stiletto heel as hero object, kneeling silhouette cropped low, red carpet, glossy black floor, worshipful fashion framing' },
+    // Masks, hoods, clubwear, and identity play
+    { id: 'adult-masked-club',          name: 'Masked Club',          tag: 'mask',    adult: true, colors: ['#a855f7', '#111827'], prompt: 'black fetish mask, latex and leather textures, purple club haze, anonymous nightlife glamour' },
+    { id: 'adult-pup-hood',             name: 'Pup Hood',             tag: 'hood',    adult: true, colors: ['#22d3ee', '#111827'], prompt: 'human clubwear with glossy pup hood, collar, neon basement light, rubber textures, kink-party portrait' },
+    { id: 'adult-gas-mask',             name: 'Gas Mask',             tag: 'mask',    adult: true, colors: ['#84cc16', '#020617'], prompt: 'black gas mask, latex bodysuit, green industrial light, fog, dystopian fetish-club fashion' },
+    { id: 'adult-hooded-latex',         name: 'Hooded Latex',         tag: 'hood',    adult: true, colors: ['#020617', '#e11d48'], prompt: 'smooth latex hood, glossy bodysuit, red rim light, anonymous silhouette, sleek high-fetish portrait' },
+    { id: 'adult-black-tape',           name: 'Black Tape',           tag: 'tape',    adult: true, colors: ['#111827', '#f8fafc'], prompt: 'black body tape styling, graphic lines over skin, flash-lit studio, minimal fetish-fashion composition' },
+    { id: 'adult-club-cage',            name: 'Club Cage',            tag: 'club',    adult: true, colors: ['#ec4899', '#22d3ee'], prompt: 'cage dancer platform, chrome grid shadows, pink-blue club lights, leather outfit, sweaty nightlife atmosphere' },
+    // Pain, sensation, and ritualized kink visuals
+    { id: 'adult-wax-play',             name: 'Wax Play',             tag: 'wax',     adult: true, colors: ['#f97316', '#7f1d1d'], prompt: 'red candle wax, dark room, heated skin highlights, careful kink-editorial composition, molten gloss close-up' },
+    { id: 'adult-impact-play',          name: 'Impact Play',          tag: 'impact',  adult: true, colors: ['#dc2626', '#0f172a'], prompt: 'paddle prop, leather styling, tense club lighting, impact-play fashion shoot, dramatic anticipation, no injury gore' },
+    { id: 'adult-ice-play',             name: 'Ice Play',             tag: 'sensation',adult: true, colors: ['#bae6fd', '#0f172a'], prompt: 'ice cube melting on collarbone, goosebump texture, cold blue light, close sensual crop, sensation-play editorial' },
+    { id: 'adult-oil-slick',            name: 'Oil Slick',            tag: 'gloss',   adult: true, colors: ['#fbbf24', '#111827'], prompt: 'oiled skin, black background, gold highlights, slick body lines, glossy adult studio glamour' },
+    { id: 'adult-ritual-kink',          name: 'Ritual Kink',          tag: 'ritual',  adult: true, colors: ['#581c87', '#facc15'], prompt: 'candlelit kink ritual room, leather collar, gold hardware, dark velvet, incense smoke, occult luxury atmosphere' },
+    { id: 'adult-red-room',             name: 'Red Room',             tag: 'bdsm',    adult: true, colors: ['#dc2626', '#111827'], prompt: 'red-lit private room, leather furniture, silk sheets, shadows, high-end adult club mood, charged but composed' },
+    // Boudoir, glam, and adult creator looks
+    { id: 'adult-boudoir',              name: 'Boudoir',              tag: 'boudoir', adult: true, colors: ['#7f1d1d', '#fda4af'], prompt: 'silk sheets, low lamp light, warm skin, intimate crop, hotel-room heat, classic softcore magazine mood' },
+    { id: 'adult-mirror-selfie',        name: 'Mirror Selfie',        tag: 'selfie',  adult: true, colors: ['#f9a8d4', '#fde68a'], prompt: 'bedroom mirror selfie, phone flash, messy sheets, lingerie or cropped tee, creator-feed realism' },
+    { id: 'adult-cam-room',             name: 'Cam Room',             tag: 'cam',     adult: true, colors: ['#f472b6', '#22d3ee'], prompt: 'creator cam-room setup, ring light, LED strips, plush chair, direct-to-camera pose, paid-page aesthetic' },
+    { id: 'adult-lingerie',             name: 'Lingerie',             tag: 'lingerie',adult: true, colors: ['#fda4af', '#f8fafc'], prompt: 'lace, satin, garters, clean studio light, fashion catalog polish with adult centerfold attitude' },
+    { id: 'adult-sheer',                name: 'Sheer',                tag: 'fashion', adult: true, colors: ['#f5f5f4', '#94a3b8'], prompt: 'translucent fabric layers, strategic coverage, runway pose, flash-lit adult fashion editorial' },
+    { id: 'adult-body-paint',           name: 'Body Paint',           tag: 'art',     adult: true, colors: ['#22d3ee', '#f97316'], prompt: 'painted-on costume illusion, glossy studio light, bold graphic body shapes, art-photo heat' },
+];
+
+const ADULT_PRESET_GUARDRAILS = 'Adult-only preset boundaries: all subjects are clearly adult, consensual staging only, no minors or ageplay, no coercion or nonconsent, no incest or taboo framing, no bestiality, no explicit sex acts, no close-up genital anatomy, no sexualized realistic public figures.';
+const DEFAULT_IMAGE_MODEL = 'grok-imagine-image-quality';
+const DEFAULT_VIDEO_MODEL = 'grok-imagine-video';
+const DEFAULT_IMAGE_RESOLUTION = '2k';
+const DEFAULT_IMAGE_ASPECT_RATIO = 'auto';
+const DEFAULT_VIDEO_RESOLUTION = '720p';
+const DEFAULT_VIDEO_ASPECT_RATIO = '16:9';
+const DEFAULT_VIDEO_DURATION = '8';
+
+const IMAGE_INTENSITY_PROMPTS = {
+    raw: '',
+    clean: 'Use a light touch: preserve the subject, identity, and prompt intent; add only enough art direction to clarify lighting and composition.',
+    bold: 'Add confident art direction with sharper lighting, cleaner materials, and stronger camera intent while keeping faces and character identity stable.',
+    max: 'Push the selected look hard: bolder lighting, richer materials, more distinctive set design, and an iconic composition while preserving identity.',
+};
 
 // ── State ────────────────────────────────────────────────────────────────────
 const state = {
@@ -74,14 +191,27 @@ const state = {
     chatStreaming: false,
     systemPrompt: '',
     chatAttachments: [], // {name, type, dataUrl, isImage, ext}
+    chatImageRef: null,  // b64 of most recently uploaded chat image — used as character reference
+    chatStylePreset: null,
+    chatTools: [],
+    agentEffort: 'low',
     // Image
-    imagineModel: 'grok-imagine-image',
+    imagineModel: DEFAULT_IMAGE_MODEL,
+    imagineResolution: DEFAULT_IMAGE_RESOLUTION,
+    imagineAspectRatio: DEFAULT_IMAGE_ASPECT_RATIO,
+    imagineIntensity: 'clean',
     imagineSource: null,
     imagineSourceUrl: null,
+    imagineStylePreset: null,
     imagineImages: [],
     imagineSelected: null,
+    adultStylesEnabled: false,
     // Video
     videoPolling: null,
+    videoModel: DEFAULT_VIDEO_MODEL,
+    videoDuration: DEFAULT_VIDEO_DURATION,
+    videoResolution: DEFAULT_VIDEO_RESOLUTION,
+    videoAspectRatio: DEFAULT_VIDEO_ASPECT_RATIO,
     videoSource: null,
     videoSourceUrl: null,
     videoSourceLoading: false,
@@ -91,6 +221,8 @@ const state = {
     videoFromFreeze: false,  // true when source came from freeze frame
     stitchMode: false,
     stitchQueue: [],
+    chatVideos: [],  // tracks videos generated in chat for stitching/extension
+    fuseSlots: [],  // up to 2 images for fusion {url, b64, label}
     // Voice
     voiceFiles: [],
     voiceMode: 'tts',
@@ -112,6 +244,7 @@ const state = {
     codeMessages: [],
     codeStreaming: false,
     codeAttachments: [],
+    codeTools: ['code_execution'],
     // Artifacts
     currentArtifact: null,
     artifacts: [],
@@ -119,15 +252,79 @@ const state = {
     skills: [],
     // Collections
     collections: [],
+    // Chat Voice (live voice in chat)
+    chatVoiceActive: false,
+    chatVoiceWs: null,
+    chatVoiceAudioCtx: null,
+    chatVoiceProcessor: null,
+    chatVoiceMediaStream: null,
+    chatVoiceSource: null,
+    chatVoicePlaybackQueue: [],
+    chatVoiceIsPlaying: false,
+    chatVoiceSpeaking: false,
+    chatVoiceResponseText: '',
+    chatVoiceStreamEl: null,
 };
 
 const DORK_AVATAR_SVG = '<svg viewBox="0 0 64 64" fill="none" style="width:100%;height:100%"><ellipse cx="32" cy="32" rx="24" ry="7" stroke="#7c5cfc" stroke-width="1.5" opacity="0.35" transform="rotate(4 32 32)"/><circle cx="32" cy="32" r="12" fill="#030308" stroke="#7c5cfc" stroke-width="2"/><circle cx="32" cy="32" r="7" fill="rgba(124,92,252,0.3)"/><circle cx="27" cy="29" r="5" fill="white"/><circle cx="38" cy="28" r="3.8" fill="white"/><circle cx="28.2" cy="28.2" r="2.5" fill="#030308"/><circle cx="39" cy="27" r="1.9" fill="#030308"/><circle cx="27" cy="27.5" r="0.9" fill="white"/><circle cx="38.2" cy="26.2" r="0.7" fill="white"/><path d="M27 37 Q32 42 38 36" stroke="#a78bfa" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+const DEFAULT_CHAT_MODEL = 'grok-4.20-beta-0309-non-reasoning';
+
+function isMultiAgentModel(modelId = state.chatModel) {
+    return modelId.includes('multi-agent');
+}
+
+function updateAgentTeamVisibility() {
+    const strip = document.getElementById('agent-team-strip');
+    if (strip) strip.style.display = isMultiAgentModel() ? 'flex' : 'none';
+    document.querySelectorAll('[data-agent-effort]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.agentEffort === state.agentEffort);
+    });
+}
+
+function ensureEnabledModel(selectId, stateKey, fallback = DEFAULT_CHAT_MODEL) {
+    const select = document.getElementById(selectId);
+    if (!select) return state[stateKey] || fallback;
+    const current = state[stateKey] || select.value || fallback;
+    let opt = [...select.options].find(o => o.value === current && !o.disabled);
+    if (!opt) opt = [...select.options].find(o => o.value === fallback && !o.disabled);
+    if (!opt) opt = [...select.options].find(o => !o.disabled);
+    if (opt) {
+        select.value = opt.value;
+        state[stateKey] = opt.value;
+    }
+    return state[stateKey] || fallback;
+}
+
+function syncSelectValue(ids, value) {
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && value && [...el.options].some(opt => opt.value === value)) el.value = value;
+    }
+}
+
+function setSharedMediaSetting(key, value, ids) {
+    state[key] = value;
+    syncSelectValue(ids, value);
+    savePersistence();
+}
+
+function syncMediaControlValues() {
+    syncSelectValue(['imagine-model', 'chat-image-model'], state.imagineModel || DEFAULT_IMAGE_MODEL);
+    syncSelectValue(['imagine-resolution', 'chat-image-resolution'], state.imagineResolution || DEFAULT_IMAGE_RESOLUTION);
+    syncSelectValue(['imagine-aspect', 'chat-image-aspect'], state.imagineAspectRatio || DEFAULT_IMAGE_ASPECT_RATIO);
+    syncSelectValue(['imagine-intensity', 'chat-image-strength'], state.imagineIntensity || 'clean');
+    syncSelectValue(['video-model', 'chat-video-model'], state.videoModel || DEFAULT_VIDEO_MODEL);
+    syncSelectValue(['video-duration', 'chat-video-duration'], state.videoDuration || DEFAULT_VIDEO_DURATION);
+    syncSelectValue(['video-resolution', 'chat-video-resolution'], state.videoResolution || DEFAULT_VIDEO_RESOLUTION);
+    syncSelectValue(['video-aspect', 'chat-video-aspect'], state.videoAspectRatio || DEFAULT_VIDEO_ASPECT_RATIO);
+}
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
     setupChat();
     setupImagine();
+    setupFuse();
     setupVideo();
     setupVoice();
     setupCode();
@@ -136,11 +333,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setupLibrary();
     setupCollections();
     setupSettings();
+    setupToolStrips();
+    setupSmartConsole();
     renderSkinPicker();
     setupKeyboardShortcuts();
     loadGalleries();
+    loadModelRegistry();
     loadCollectionSelectors();
     restorePersistence();
+    updateAgentTeamVisibility();
     switchPanel('chat');
 });
 
@@ -184,6 +385,263 @@ function getSelectedCollectionIds(selectId) {
     return el?.value ? [el.value] : [];
 }
 
+// ── Model Registry ───────────────────────────────────────────────────────────
+async function loadModelRegistry() {
+    try {
+        const resp = await fetch('/api/models');
+        const data = await resp.json();
+        const language = data.language || [];
+        populateModelSelect('chat-model', language, state.chatModel);
+        populateModelSelect('code-model', language, state.codeModel, true);
+        populateGenerationModelSelect('imagine-model', data.image || [], state.imagineModel, DEFAULT_IMAGE_MODEL);
+        populateGenerationModelSelect('chat-image-model', data.image || [], state.imagineModel, DEFAULT_IMAGE_MODEL);
+        populateGenerationModelSelect('video-model', data.video || [], state.videoModel, DEFAULT_VIDEO_MODEL);
+        populateGenerationModelSelect('chat-video-model', data.video || [], state.videoModel, DEFAULT_VIDEO_MODEL);
+        syncMediaControlValues();
+
+        const early = language.filter(m => m.early_access || m.tag === 'early-access');
+        const status = document.getElementById('early-access-status');
+        if (status) {
+            status.textContent = early.length
+                ? `${early.length} early access model${early.length === 1 ? '' : 's'} available`
+                : 'Grok 4.3 beta will appear here when your API key exposes it.';
+        }
+        const note = document.getElementById('model-discovery-note');
+        if (note) note.textContent = data.discovery?.note || `${language.length} language models loaded.`;
+    } catch {
+        const note = document.getElementById('model-discovery-note');
+        if (note) note.textContent = 'Using bundled model list.';
+    }
+}
+
+function populateGenerationModelSelect(selectId, models, selected, fallback) {
+    const select = document.getElementById(selectId);
+    if (!select || !models.length) return;
+    const current = selected || select.value || fallback;
+    const seen = new Set();
+    const options = [];
+    for (const m of models) {
+        if (!m.id || seen.has(m.id)) continue;
+        seen.add(m.id);
+        const locked = m.available === false;
+        const price = m.price ? ` · ${m.price}` : '';
+        const version = m.version ? ` · ${m.version}` : '';
+        const suffix = locked ? ' · locked' : '';
+        options.push(`<option value="${escapeAttr(m.id)}" ${locked ? 'disabled' : ''}>${escapeHtml(m.name || m.id)}${price}${version}${suffix}</option>`);
+        for (const alias of (m.aliases || [])) {
+            if (!alias || alias === m.id || seen.has(alias)) continue;
+            seen.add(alias);
+            options.push(`<option value="${escapeAttr(alias)}" ${locked ? 'disabled' : ''}>${escapeHtml(alias)} · alias${suffix}</option>`);
+        }
+    }
+    select.innerHTML = options.join('');
+    const enabledCurrent = [...select.options].some(opt => opt.value === current && !opt.disabled);
+    if (enabledCurrent) select.value = current;
+    else {
+        const next = [...select.options].find(opt => opt.value === fallback && !opt.disabled) || [...select.options].find(opt => !opt.disabled);
+        if (next) select.value = next.value;
+    }
+    if (selectId === 'imagine-model' || selectId === 'chat-image-model') state.imagineModel = select.value;
+    if (selectId === 'video-model' || selectId === 'chat-video-model') state.videoModel = select.value;
+}
+
+function populateModelSelect(selectId, models, selected, codeFirst = false) {
+    const select = document.getElementById(selectId);
+    if (!select || !models.length) return;
+    const current = selected || select.value;
+    const extraOptions = [...select.options]
+        .filter(opt => opt.value && !opt.value.toLowerCase().includes('grok'))
+        .map(opt => ({ value: opt.value, label: opt.textContent }));
+    const ordered = [...models].sort((a, b) => {
+        if (codeFirst) {
+            const ac = a.tag === 'code' ? -1 : 0;
+            const bc = b.tag === 'code' ? -1 : 0;
+            if (ac !== bc) return ac - bc;
+        }
+        return 0;
+    });
+    const grokOptions = ordered.map(m => {
+        const locked = m.available === false;
+        const tag = locked ? 'Locked' : m.tag === 'early-access' ? 'Beta' : m.tag === 'multi-agent' ? 'Agent' : m.tag === 'reasoning' ? 'Reasoning' : m.tag === 'code' ? 'Code' : 'Fast';
+        const ctx = m.context ? ` · ${(m.context / 1000).toLocaleString()}K ctx` : '';
+        const suffix = locked ? ' · not available to this API key' : '';
+        return `<option value="${escapeAttr(m.id)}" ${locked ? 'disabled' : ''}>${escapeHtml(m.name)} · ${tag}${ctx}${suffix}</option>`;
+    });
+    const otherOptions = extraOptions.map(opt => `<option value="${escapeAttr(opt.value)}">${escapeHtml(opt.label)}</option>`);
+    select.innerHTML = [...grokOptions, ...otherOptions].join('');
+    const enabledCurrent = [...select.options].some(opt => opt.value === current && !opt.disabled);
+    if (enabledCurrent) select.value = current;
+    else {
+        const fallback = selectId === 'chat-model' ? DEFAULT_CHAT_MODEL : state.codeModel;
+        const next = [...select.options].find(opt => opt.value === fallback && !opt.disabled) || [...select.options].find(opt => !opt.disabled);
+        if (next) select.value = next.value;
+    }
+    if (selectId === 'chat-model') {
+        state.chatModel = select.value;
+        updateAgentTeamVisibility();
+    }
+    if (selectId === 'code-model') state.codeModel = select.value;
+}
+
+// ── Tool Chips ───────────────────────────────────────────────────────────────
+function setupToolStrips() {
+    wireToolStrip('chat-tool-strip', 'chatTools');
+    wireToolStrip('code-tool-strip', 'codeTools');
+    document.querySelectorAll('[data-agent-effort]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.agentEffort = btn.dataset.agentEffort;
+            updateAgentTeamVisibility();
+            savePersistence();
+        });
+    });
+}
+
+function wireToolStrip(stripId, stateKey) {
+    const strip = document.getElementById(stripId);
+    if (!strip) return;
+    strip.querySelectorAll('.tool-chip[data-tool]').forEach(btn => {
+        btn.classList.toggle('active', state[stateKey].includes(btn.dataset.tool));
+        btn.addEventListener('click', () => {
+            const tool = btn.dataset.tool;
+            if (state[stateKey].includes(tool)) {
+                state[stateKey] = state[stateKey].filter(t => t !== tool);
+            } else {
+                state[stateKey].push(tool);
+            }
+            btn.classList.toggle('active', state[stateKey].includes(tool));
+            savePersistence();
+        });
+    });
+}
+
+function updateToolStrip(stripId, stateKey) {
+    const strip = document.getElementById(stripId);
+    if (!strip) return;
+    strip.querySelectorAll('.tool-chip[data-tool]').forEach(btn => {
+        btn.classList.toggle('active', state[stateKey].includes(btn.dataset.tool));
+    });
+}
+
+// ── Smart Console ────────────────────────────────────────────────────────────
+const smartConsole = {
+    workspace: null,
+    commands: [],
+    activeIndex: 0,
+};
+
+function setupSmartConsole() {
+    document.getElementById('command-palette-btn')?.addEventListener('click', openCommandPalette);
+}
+
+function buildCommandList() {
+    const panels = [
+        ['chat', 'Chat', 'Open the main conversation surface'],
+        ['imagine', 'Imagine', 'Open image generation'],
+        ['video', 'Video', 'Open video generation'],
+        ['voice', 'Voice', 'Open voice tools'],
+        ['code', 'Code', 'Open coding workspace'],
+        ['artifacts', 'Artifacts', 'Open saved previews'],
+        ['skills', 'Skills', 'Open skill builder'],
+        ['library', 'Library', 'Open image library'],
+        ['collections', 'Collections', 'Open RAG collections'],
+    ];
+    return [
+        ...panels.map(([id, title, desc]) => ({ id: `panel:${id}`, icon: title[0], title, desc, scope: 'panel', run: () => switchPanel(id) })),
+        { id: 'tool:web_search', icon: 'W', title: 'Toggle Web', desc: 'Toggle xAI web search for chat', scope: 'tool', run: () => toggleSmartTool('web_search') },
+        { id: 'tool:code_execution', icon: '>', title: 'Toggle Code Execution', desc: 'Toggle xAI code execution for chat', scope: 'tool', run: () => toggleSmartTool('code_execution') },
+        { id: 'tool:collections_search', icon: 'F', title: 'Toggle Files', desc: 'Toggle collection search for chat', scope: 'tool', run: () => toggleSmartTool('collections_search') },
+    ];
+}
+
+function toggleSmartTool(tool) {
+    state.chatTools = state.chatTools.includes(tool)
+        ? state.chatTools.filter(t => t !== tool)
+        : [...state.chatTools, tool];
+    updateToolStrip('chat-tool-strip', 'chatTools');
+    savePersistence();
+    toast(`${tool.replace(/_/g, ' ')} ${state.chatTools.includes(tool) ? 'on' : 'off'}`, 'success');
+}
+
+function openCommandPalette() {
+    closeCommandPalette();
+    smartConsole.commands = buildCommandList();
+    smartConsole.activeIndex = 0;
+    const overlay = document.createElement('div');
+    overlay.className = 'command-palette-overlay';
+    overlay.innerHTML = `
+        <div class="command-palette" role="dialog" aria-label="Command palette">
+            <input class="command-search" placeholder="Search commands..." autocomplete="off">
+            <div class="command-list"></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    const search = overlay.querySelector('.command-search');
+    search.addEventListener('input', () => {
+        smartConsole.activeIndex = 0;
+        renderCommandPalette(search.value);
+    });
+    search.addEventListener('keydown', e => {
+        const visible = getVisibleCommands(search.value);
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            smartConsole.activeIndex = Math.min(visible.length - 1, smartConsole.activeIndex + 1);
+            renderCommandPalette(search.value);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            smartConsole.activeIndex = Math.max(0, smartConsole.activeIndex - 1);
+            renderCommandPalette(search.value);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            visible[smartConsole.activeIndex]?.run();
+            closeCommandPalette();
+        } else if (e.key === 'Escape') {
+            closeCommandPalette();
+        }
+    });
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeCommandPalette();
+    });
+    renderCommandPalette('');
+    search.focus();
+}
+
+function closeCommandPalette() {
+    document.querySelector('.command-palette-overlay')?.remove();
+}
+
+function getVisibleCommands(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return smartConsole.commands;
+    return smartConsole.commands.filter(cmd =>
+        `${cmd.title} ${cmd.desc} ${cmd.scope}`.toLowerCase().includes(q)
+    );
+}
+
+function renderCommandPalette(query) {
+    const list = document.querySelector('.command-list');
+    if (!list) return;
+    const visible = getVisibleCommands(query);
+    if (!visible.length) {
+        list.innerHTML = '<div class="command-empty">No matching commands</div>';
+        return;
+    }
+    smartConsole.activeIndex = Math.min(smartConsole.activeIndex, visible.length - 1);
+    list.innerHTML = visible.map((cmd, index) => `
+        <button class="command-item ${index === smartConsole.activeIndex ? 'active' : ''}" data-command="${escapeAttr(cmd.id)}">
+            <span class="command-icon">${escapeHtml(cmd.icon)}</span>
+            <span><span class="command-title">${escapeHtml(cmd.title)}</span><span class="command-desc">${escapeHtml(cmd.desc)}</span></span>
+            <span class="command-scope">${escapeHtml(cmd.scope)}</span>
+        </button>
+    `).join('');
+    list.querySelectorAll('.command-item').forEach((btn, index) => {
+        btn.addEventListener('mouseenter', () => smartConsole.activeIndex = index);
+        btn.addEventListener('click', () => {
+            visible[index].run();
+            closeCommandPalette();
+        });
+    });
+}
+
 // ── Chat ─────────────────────────────────────────────────────────────────────
 function setupChat() {
     const input = document.getElementById('chat-input');
@@ -198,7 +656,11 @@ function setupChat() {
         showSlashHint(input);
     });
     sendBtn.addEventListener('click', sendChatMessage);
-    document.getElementById('chat-model').addEventListener('change', e => state.chatModel = e.target.value);
+    document.getElementById('chat-model').addEventListener('change', e => {
+        state.chatModel = e.target.value;
+        updateAgentTeamVisibility();
+        savePersistence();
+    });
     document.getElementById('chat-clear').addEventListener('click', () => {
         state.chatMessages = [];
         document.getElementById('chat-messages').innerHTML = '';
@@ -208,6 +670,18 @@ function setupChat() {
         const val = prompt('System prompt (leave empty to clear):', state.systemPrompt);
         if (val !== null) state.systemPrompt = val;
     });
+    document.getElementById('chat-image-model')?.addEventListener('change', e => setSharedMediaSetting('imagineModel', e.target.value, ['imagine-model', 'chat-image-model']));
+    document.getElementById('chat-image-resolution')?.addEventListener('change', e => setSharedMediaSetting('imagineResolution', e.target.value, ['imagine-resolution', 'chat-image-resolution']));
+    document.getElementById('chat-image-aspect')?.addEventListener('change', e => setSharedMediaSetting('imagineAspectRatio', e.target.value, ['imagine-aspect', 'chat-image-aspect']));
+    document.getElementById('chat-image-strength')?.addEventListener('change', e => setSharedMediaSetting('imagineIntensity', e.target.value, ['imagine-intensity', 'chat-image-strength']));
+    document.getElementById('chat-video-model')?.addEventListener('change', e => setSharedMediaSetting('videoModel', e.target.value, ['video-model', 'chat-video-model']));
+    document.getElementById('chat-video-duration')?.addEventListener('change', e => setSharedMediaSetting('videoDuration', e.target.value, ['video-duration', 'chat-video-duration']));
+    document.getElementById('chat-video-resolution')?.addEventListener('change', e => setSharedMediaSetting('videoResolution', e.target.value, ['video-resolution', 'chat-video-resolution']));
+    document.getElementById('chat-video-aspect')?.addEventListener('change', e => setSharedMediaSetting('videoAspectRatio', e.target.value, ['video-aspect', 'chat-video-aspect']));
+    document.getElementById('chat-style-select')?.addEventListener('change', e => selectChatStylePreset(e.target.value));
+    document.getElementById('chat-style-random')?.addEventListener('click', randomChatStylePreset);
+    document.getElementById('chat-style-clear')?.addEventListener('click', clearChatStylePreset);
+    renderChatStyleSelect();
 
     // File upload
     const uploadBtn = document.getElementById('chat-upload-btn');
@@ -220,6 +694,18 @@ function setupChat() {
     inputArea.addEventListener('dragover', e => { e.preventDefault(); inputArea.classList.add('drag-over'); });
     inputArea.addEventListener('dragleave', () => inputArea.classList.remove('drag-over'));
     inputArea.addEventListener('drop', e => { e.preventDefault(); inputArea.classList.remove('drag-over'); handleChatFiles(e.dataTransfer.files); });
+
+    // Voice persona — update mid-session on Enter or blur
+    const personaInput = document.getElementById('chat-voice-persona');
+    if (personaInput) {
+        personaInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); updateChatVoicePersona(); } });
+        personaInput.addEventListener('blur', () => { if (state.chatVoiceActive) updateChatVoicePersona(); });
+    }
+    // Voice select — update mid-session
+    const voiceSelect = document.getElementById('chat-voice-select');
+    if (voiceSelect) {
+        voiceSelect.addEventListener('change', () => { if (state.chatVoiceActive) updateChatVoicePersona(); });
+    }
 }
 
 // ── Chat File Upload ─────────────────────────────────────────────────────────
@@ -238,10 +724,13 @@ function handleChatFiles(files) {
             continue;
         }
         const isImage = file.type.startsWith('image/');
+        if (isImage && !isSupportedReferenceImage(file)) continue;
         const ext = file.name.split('.').pop().toUpperCase();
         const reader = new FileReader();
-        reader.onload = e => {
-            const attachment = { name: file.name, type: file.type, dataUrl: e.target.result, isImage, ext };
+        reader.onload = async e => {
+            const dataUrl = isImage ? await assetLibDownscale(e.target.result, 2048) : e.target.result;
+            const type = isImage ? (dataUrl.match(/^data:([^;]+)/)?.[1] || file.type) : file.type;
+            const attachment = { name: file.name, type, dataUrl, isImage, ext };
             state.chatAttachments.push(attachment);
             renderChatAttachments();
         };
@@ -318,12 +807,412 @@ function showSlashHint(input) {
     }
 }
 
-function quickImagine(prompt) {
-    state.chatStreaming = false;
-    document.getElementById('chat-send').disabled = false;
-    const input = document.getElementById('chat-input');
-    input.value = '/imagine ' + prompt;
-    setTimeout(() => sendChatMessage(), 50);
+// ── Action Tag Processor ──────────────────────────────────────────────────────
+// Scans AI responses for [GENERATE_IMAGE: ...], [GENERATE_VIDEO: ...], etc.
+// and executes the corresponding API calls, replacing tags with rendered media
+async function processActionTags(content, bodyEl) {
+    const imageMatches = [...content.matchAll(/\[GENERATE_IMAGE:\s*(.+?)\]/gi)];
+    const videoMatches = [...content.matchAll(/\[GENERATE_VIDEO:\s*(.+?)\]/gi)];
+    const editMatches = [...content.matchAll(/\[EDIT_IMAGE:\s*(.+?)\]/gi)];
+    const extendMatches = [...content.matchAll(/\[EXTEND_VIDEO:\s*(.+?)\]/gi)];
+    const stitchMatches = [...content.matchAll(/\[STITCH_VIDEOS\]/gi)];
+    const combineMatches = [...content.matchAll(/\[COMBINE_IMAGES(?::\s*(.+?))?\]/gi)];
+    const charComboMatches = [...content.matchAll(/\[COMBINE_CHARACTERS(?::\s*(.+?))?\]/gi)];
+
+    if (!imageMatches.length && !videoMatches.length && !editMatches.length && !extendMatches.length && !stitchMatches.length && !combineMatches.length && !charComboMatches.length) return;
+
+    // Process image generations — use edit API with source image for character consistency
+    for (const match of imageMatches) {
+        const prompt = match[1].trim().slice(0, 500);
+        const styledPrompt = composeImagePrompt(prompt, 'chat');
+        const placeholder = match[0];
+        try {
+            let endpoint = '/api/image/generate';
+            let genPayload = { prompt: styledPrompt, model: state.imagineModel || DEFAULT_IMAGE_MODEL, ...getImagineApiSettings() };
+
+            // Character consistency: use edit API with reference image
+            // Priority: chat upload > imagine source > most recent gallery image
+            // CRITICAL: wrap prompt with face/character preservation instruction
+            const refB64 = state.chatImageRef || state.imagineSource;
+            if (refB64) {
+                endpoint = '/api/image/edit';
+                genPayload.image = refB64;
+                genPayload.prompt = `Preserve the EXACT face, facial features, hair, eye color, skin tone, and physical appearance of the character/person in this image. Place them in a new scene: ${styledPrompt}`;
+            } else if (state.imagineImages.length) {
+                try {
+                    const refBlob = await fetch(state.imagineImages[0].url).then(r => r.blob());
+                    const rb64 = await new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(refBlob); });
+                    endpoint = '/api/image/edit';
+                    genPayload.image = rb64;
+                    genPayload.prompt = `Preserve the EXACT face, facial features, hair, eye color, skin tone, and physical appearance of the character/person in this image. Place them in a new scene: ${styledPrompt}`;
+                } catch {}
+            }
+
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(genPayload),
+            });
+            const data = await resp.json();
+            if (data.images?.length) {
+                const img = data.images[0];
+                state.imagineImages.unshift(img);
+                refreshImagineGallery();
+                refreshVideoImagePicker();
+                loadLibrary();
+                const safePrompt = escapeAttr(prompt);
+                const imgHtml = `<div class="action-tag-result" style="margin:8px 0">
+                    <p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">🎨 ${escapeHtml(prompt)}</p>
+                    <img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
+                    <div class="cross-tab-actions" style="margin-top:4px">
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabEditImage('${img.url}','${safePrompt}')" title="Edit">Edit</button>
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabUseAsVideoSource('${img.url}','${safePrompt}')" title="Video">Video</button>
+                        <button class="btn btn-sm btn-ghost" onclick="downloadImage('${img.url}','${img.filename}')" title="Save">Save</button>
+                    </div>
+                </div>`;
+                bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder), imgHtml);
+            } else if (data.error) {
+                bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                    `<span style="color:var(--red);font-size:12px">Image generation failed: ${escapeHtml(data.error)}</span>`);
+            }
+        } catch (err) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--red);font-size:12px">Image generation failed: ${escapeHtml(err.message)}</span>`);
+        }
+    }
+
+    // Process video generations — use gallery/source image as first frame for character consistency
+    for (const match of videoMatches) {
+        const prompt = match[1].trim();
+        const placeholder = match[0];
+        const placeholderId = 'vid-' + Date.now() + Math.random().toString(36).slice(2, 6);
+        bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+            `<div id="${placeholderId}" class="action-tag-result" style="margin:8px 0">
+                <p style="color:var(--text-dim);font-size:11px">🎬 ${escapeHtml(prompt)}</p>
+                <div class="typing-indicator" style="margin:8px 0"><span></span><span></span><span></span></div>
+                <span style="color:var(--text-dim);font-size:11px">Generating video...</span>
+            </div>`);
+        try {
+            // Build video payload — include source image for character consistency
+            const vidPayload = { prompt, ...getVideoApiSettings() };
+            const vidSource = state.chatImageRef || state.videoSource || state.imagineSource;
+            if (vidSource) {
+                vidPayload.image = vidSource;
+            } else if (state.imagineImages.length) {
+                try {
+                    const vb = await fetch(state.imagineImages[0].url).then(r => r.blob());
+                    vidPayload.image = await new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(vb); });
+                } catch {}
+            }
+            const resp = await fetch('/api/video/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vidPayload),
+            });
+            const data = await resp.json();
+            if (data.id) {
+                const pollTimer = setInterval(async () => {
+                    try {
+                        const pr = await fetch(`/api/video/poll?id=${data.id}`);
+                        const pd = await pr.json();
+                        const el = document.getElementById(placeholderId);
+                        if (!el) { clearInterval(pollTimer); return; }
+                        if (pd.status === 'completed') {
+                            clearInterval(pollTimer);
+                            state.videos.unshift({ filename: pd.filename, url: pd.url });
+                            state.chatVideos.push({ filename: pd.filename, url: pd.url, prompt });
+                            refreshVideoGallery();
+                            el.innerHTML = `<p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">🎬 ${escapeHtml(prompt)}</p>
+                                <video src="${pd.url}" controls style="max-width:100%;border-radius:var(--radius-sm)"></video>
+                                <div class="cross-tab-actions" style="margin-top:4px">
+                                    <button class="btn btn-sm btn-ghost" onclick="downloadVideo('${pd.url}','${pd.filename}')" title="Save">Save</button>
+                                </div>`;
+                            toast('Video ready!', 'success');
+                        } else if (pd.error) {
+                            clearInterval(pollTimer);
+                            el.innerHTML = `<span style="color:var(--red);font-size:12px">Video failed: ${escapeHtml(pd.error)}</span>`;
+                        }
+                    } catch {}
+                }, 3000);
+            }
+        } catch (err) {
+            const el = document.getElementById(placeholderId);
+            if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">Video generation failed: ${escapeHtml(err.message)}</span>`;
+        }
+    }
+
+    // Process image edits (edits the most recent image in gallery)
+    for (const match of editMatches) {
+        const prompt = match[1].trim();
+        const placeholder = match[0];
+        const sourceImage = state.imagineImages.length ? state.imagineImages[0] : null;
+        if (!sourceImage) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--text-dim);font-size:12px">No image in gallery to edit. Generate one first.</span>`);
+            continue;
+        }
+        try {
+            const imgResp = await fetch(sourceImage.url);
+            const blob = await imgResp.blob();
+            const base64 = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(blob);
+            });
+            const resp = await fetch('/api/image/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, image: base64, model: state.imagineModel || DEFAULT_IMAGE_MODEL, ...getImagineApiSettings() }),
+            });
+            const data = await resp.json();
+            if (data.images?.length) {
+                const img = data.images[0];
+                state.imagineImages.unshift(img);
+                refreshImagineGallery();
+                refreshVideoImagePicker();
+                loadLibrary();
+                const safeEditPrompt = escapeAttr(prompt);
+                const imgHtml = `<div class="action-tag-result" style="margin:8px 0">
+                    <p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">✏️ Edit: ${escapeHtml(prompt)}</p>
+                    <img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
+                    <div class="cross-tab-actions" style="margin-top:4px">
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabEditImage('${img.url}','${safeEditPrompt}')" title="Edit again">Edit</button>
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabUseAsVideoSource('${img.url}','${safeEditPrompt}')" title="Video">Video</button>
+                        <button class="btn btn-sm btn-ghost" onclick="downloadImage('${img.url}','${img.filename}')" title="Save">Save</button>
+                    </div>
+                </div>`;
+                bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder), imgHtml);
+            }
+        } catch (err) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--red);font-size:12px">Image edit failed: ${escapeHtml(err.message)}</span>`);
+        }
+    }
+
+    // Process video extensions — extract last frame, use as reference
+    for (const match of extendMatches) {
+        const prompt = match[1].trim();
+        const placeholder = match[0];
+        const lastVideo = state.chatVideos.length ? state.chatVideos[state.chatVideos.length - 1] : null;
+        if (!lastVideo) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--text-dim);font-size:12px">No video to extend. Generate one first.</span>`);
+            continue;
+        }
+        const placeholderId = 'ext-' + Date.now() + Math.random().toString(36).slice(2, 6);
+        bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+            `<div id="${placeholderId}" class="action-tag-result" style="margin:8px 0">
+                <p style="color:var(--text-dim);font-size:11px">🔄 Extending from: ${escapeHtml(lastVideo.prompt || lastVideo.filename)}</p>
+                <div class="typing-indicator" style="margin:8px 0"><span></span><span></span><span></span></div>
+                <span style="color:var(--text-dim);font-size:11px">Extracting last frame & generating continuation...</span>
+            </div>`);
+        try {
+            const frameResp = await fetch('/api/video/lastframe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: lastVideo.filename }),
+            });
+            const frameData = await frameResp.json();
+            if (frameData.error) throw new Error(frameData.error);
+            state.imagineImages.unshift({ filename: frameData.filename, url: frameData.url });
+            refreshImagineGallery();
+            const vidResp = await fetch('/api/video/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, image: frameData.base64, ...getVideoApiSettings() }),
+            });
+            const vidData = await vidResp.json();
+            if (vidData.id) {
+                const pollTimer = setInterval(async () => {
+                    try {
+                        const pr = await fetch(`/api/video/poll?id=${vidData.id}`);
+                        const pd = await pr.json();
+                        const el = document.getElementById(placeholderId);
+                        if (!el) { clearInterval(pollTimer); return; }
+                        if (pd.status === 'completed') {
+                            clearInterval(pollTimer);
+                            state.videos.unshift({ filename: pd.filename, url: pd.url });
+                            state.chatVideos.push({ filename: pd.filename, url: pd.url, prompt, extendsFrom: lastVideo.filename });
+                            refreshVideoGallery();
+                            el.innerHTML = `<p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">🔄 Extension: ${escapeHtml(prompt)}</p>
+                                <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px">
+                                    <img src="${frameData.url}" style="width:60px;height:40px;object-fit:cover;border-radius:4px;opacity:0.6" title="Last frame used as reference">
+                                    <span style="color:var(--text-dim);font-size:10px">→</span>
+                                </div>
+                                <video src="${pd.url}" controls style="max-width:100%;border-radius:var(--radius-sm)"></video>
+                                <div class="cross-tab-actions" style="margin-top:4px">
+                                    <button class="btn btn-sm btn-ghost" onclick="downloadVideo('${pd.url}','${pd.filename}')" title="Save">Save</button>
+                                </div>`;
+                            toast('Video extension ready!', 'success');
+                        } else if (pd.error) {
+                            clearInterval(pollTimer);
+                            el.innerHTML = `<span style="color:var(--red);font-size:12px">Extension failed: ${escapeHtml(pd.error)}</span>`;
+                        }
+                    } catch {}
+                }, 3000);
+            }
+        } catch (err) {
+            const el = document.getElementById(placeholderId);
+            if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">Video extension failed: ${escapeHtml(err.message)}</span>`;
+        }
+    }
+
+    // Process video stitching — combine all chat videos in order
+    for (const match of stitchMatches) {
+        const placeholder = match[0];
+        if (state.chatVideos.length < 2) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--text-dim);font-size:12px">Need at least 2 chat videos to stitch. You have ${state.chatVideos.length}.</span>`);
+            continue;
+        }
+        const placeholderId = 'stitch-' + Date.now();
+        bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+            `<div id="${placeholderId}" class="action-tag-result" style="margin:8px 0">
+                <p style="color:var(--text-dim);font-size:11px">🎬 Stitching ${state.chatVideos.length} videos...</p>
+                <div class="typing-indicator" style="margin:8px 0"><span></span><span></span><span></span></div>
+            </div>`);
+        try {
+            const filenames = state.chatVideos.map(v => v.filename);
+            const resp = await fetch('/api/video/stitch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videos: filenames }),
+            });
+            const data = await resp.json();
+            const el = document.getElementById(placeholderId);
+            if (data.error) {
+                if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">Stitch failed: ${escapeHtml(data.error)}</span>`;
+            } else {
+                state.videos.unshift({ filename: data.filename, url: data.url });
+                refreshVideoGallery();
+                if (el) el.innerHTML = `<p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">🎬 Stitched ${filenames.length} videos</p>
+                    <video src="${data.url}" controls style="max-width:100%;border-radius:var(--radius-sm)"></video>
+                    <div class="cross-tab-actions" style="margin-top:4px">
+                        <button class="btn btn-sm btn-ghost" onclick="downloadVideo('${data.url}','${data.filename}')" title="Save">Save</button>
+                    </div>`;
+                toast('Videos stitched!', 'success');
+            }
+        } catch (err) {
+            const el = document.getElementById(placeholderId);
+            if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">Stitch failed: ${escapeHtml(err.message)}</span>`;
+        }
+    }
+
+    // Process image combining — fuse the two most recent gallery images
+    for (const match of combineMatches) {
+        const userPrompt = (match[1] || '').trim();
+        const placeholder = match[0];
+        if (state.imagineImages.length < 2) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--text-dim);font-size:12px">Need at least 2 images to combine. You have ${state.imagineImages.length}.</span>`);
+            continue;
+        }
+        const placeholderId = 'combine-' + Date.now();
+        bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+            `<div id="${placeholderId}" class="action-tag-result" style="margin:8px 0">
+                <div style="display:flex;gap:4px;margin-bottom:6px">
+                    <img src="${state.imagineImages[0].url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px">
+                    <span style="color:var(--text-dim);font-size:18px;align-self:center">+</span>
+                    <img src="${state.imagineImages[1].url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px">
+                </div>
+                <div class="typing-indicator" style="margin:4px 0"><span></span><span></span><span></span></div>
+                <span style="color:var(--text-dim);font-size:11px">Analyzing & fusing images...</span>
+            </div>`);
+        try {
+            const [resp1, resp2] = await Promise.all([
+                fetch(state.imagineImages[0].url).then(r => r.blob()),
+                fetch(state.imagineImages[1].url).then(r => r.blob()),
+            ]);
+            const [b64_1, b64_2] = await Promise.all([
+                new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(resp1); }),
+                new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(resp2); }),
+            ]);
+            const resp = await fetch('/api/image/combine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image1: b64_1, image2: b64_2, prompt: userPrompt }),
+            });
+            const data = await resp.json();
+            const el = document.getElementById(placeholderId);
+            if (data.images?.length) {
+                const img = data.images[0];
+                state.imagineImages.unshift(img);
+                refreshImagineGallery();
+                refreshVideoImagePicker();
+                loadLibrary();
+                if (el) el.innerHTML = `<p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">🔀 Fusion: ${escapeHtml(data.fusion_prompt || userPrompt)}</p>
+                    <img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
+                    <div class="cross-tab-actions" style="margin-top:4px">
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabEditImage('${img.url}','${escapeAttr(data.fusion_prompt || '')}')" title="Edit">Edit</button>
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabUseAsVideoSource('${img.url}','${escapeAttr(data.fusion_prompt || '')}')" title="Video">Video</button>
+                        <button class="btn btn-sm btn-ghost" onclick="downloadImage('${img.url}','${img.filename}')" title="Save">Save</button>
+                    </div>`;
+                toast('Images combined!', 'success');
+            } else if (data.error) {
+                if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">Combine failed: ${escapeHtml(data.error)}</span>`;
+            }
+        } catch (err) {
+            const el = document.getElementById(placeholderId);
+            if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">Combine failed: ${escapeHtml(err.message)}</span>`;
+        }
+    }
+
+    // Process character combinations — merge characters from 2 images into one scene
+    for (const match of charComboMatches) {
+        const scenePrompt = (match[1] || '').trim();
+        const placeholder = match[0];
+        if (state.imagineImages.length < 2) {
+            bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+                `<span style="color:var(--text-dim);font-size:12px">Need 2 images with characters. You have ${state.imagineImages.length}.</span>`);
+            continue;
+        }
+        const placeholderId = 'charcombo-' + Date.now();
+        bodyEl.innerHTML = bodyEl.innerHTML.replace(escapeHtml(placeholder),
+            `<div id="${placeholderId}" class="action-tag-result" style="margin:8px 0">
+                <div style="display:flex;gap:4px;margin-bottom:6px">
+                    <img src="${state.imagineImages[0].url}" style="width:50px;height:50px;object-fit:cover;border-radius:50%">
+                    <span style="color:var(--text-dim);font-size:16px;align-self:center">+</span>
+                    <img src="${state.imagineImages[1].url}" style="width:50px;height:50px;object-fit:cover;border-radius:50%">
+                </div>
+                <div class="typing-indicator" style="margin:4px 0"><span></span><span></span><span></span></div>
+                <span style="color:var(--text-dim);font-size:11px">Analyzing characters & generating scene...</span>
+            </div>`);
+        try {
+            const [r1, r2] = await Promise.all([
+                fetch(state.imagineImages[0].url).then(r => r.blob()),
+                fetch(state.imagineImages[1].url).then(r => r.blob()),
+            ]);
+            const [b1, b2] = await Promise.all([
+                new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(r1); }),
+                new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(r2); }),
+            ]);
+            const resp = await fetch('/api/image/combine-characters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image1: b1, image2: b2, prompt: scenePrompt }),
+            });
+            const data = await resp.json();
+            const el = document.getElementById(placeholderId);
+            if (data.images?.length) {
+                const img = data.images[0];
+                state.imagineImages.unshift(img);
+                refreshImagineGallery(); refreshVideoImagePicker(); loadLibrary();
+                if (el) el.innerHTML = `<p style="color:var(--text-dim);font-size:11px;margin-bottom:4px">👥 Characters combined</p>
+                    <img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
+                    <div class="cross-tab-actions" style="margin-top:4px">
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabEditImage('${img.url}')" title="Edit">Edit</button>
+                        <button class="btn btn-sm btn-ghost" onclick="crossTabUseAsVideoSource('${img.url}')" title="Video">Video</button>
+                        <button class="btn btn-sm btn-ghost" onclick="downloadImage('${img.url}','${img.filename}')" title="Save">Save</button>
+                    </div>`;
+                toast('Characters combined!', 'success');
+            } else if (data.error) {
+                if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">${escapeHtml(data.error)}</span>`;
+            }
+        } catch (err) {
+            const el = document.getElementById(placeholderId);
+            if (el) el.innerHTML = `<span style="color:var(--red);font-size:12px">${escapeHtml(err.message)}</span>`;
+        }
+    }
 }
 
 async function sendChatMessage() {
@@ -333,6 +1222,11 @@ async function sendChatMessage() {
     if (!text && !state.chatAttachments.length) return;
     input.value = '';
     input.style.height = 'auto';
+
+    // If voice mode is active, route typed text through the voice WebSocket
+    if (state.chatVoiceActive && !state.chatAttachments.length && text) {
+        if (sendChatVoiceText(text)) return;
+    }
 
     const msgContainer = document.getElementById('chat-messages');
     const welcome = msgContainer.querySelector('.welcome');
@@ -383,6 +1277,7 @@ async function sendChatMessage() {
                 model: state.codeModel,
                 messages: [{ role: 'user', content: prompt }],
                 system: CODE_SYSTEM_PROMPT,
+                tools: state.codeTools,
             };
             const { content, reasoning } = await streamChat(payload, bodyEl);
             state.chatMessages.push({ role: 'user', content: text });
@@ -404,12 +1299,29 @@ async function sendChatMessage() {
 
     if (imagineMatch) {
         const prompt = imagineMatch[2];
+        const styledPrompt = composeImagePrompt(prompt, 'chat');
         appendMessage('chat-messages', 'user', text);
         const msgEl = appendMessage('chat-messages', 'assistant', '');
         const bodyEl = msgEl.querySelector('.message-body');
         bodyEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div><span style="color:var(--text-dim);margin-left:8px">Generating image...</span>';
         try {
-            const resp = await fetch('/api/image/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, model: 'grok-imagine-image' }) });
+            let slashEndpoint = '/api/image/generate';
+            let slashPayload = { prompt: styledPrompt, model: state.imagineModel || DEFAULT_IMAGE_MODEL, ...getImagineApiSettings() };
+            const slashRef = state.chatImageRef || state.imagineSource;
+            if (slashRef) {
+                slashEndpoint = '/api/image/edit';
+                slashPayload.image = slashRef;
+                slashPayload.prompt = `Preserve the EXACT face, facial features, hair, eye color, skin tone, and physical appearance of the character/person in this image. Place them in a new scene: ${styledPrompt}`;
+            } else if (state.imagineImages.length) {
+                try {
+                    const rb = await fetch(state.imagineImages[0].url).then(r => r.blob());
+                    const rb64 = await new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result.split(',')[1]); r.readAsDataURL(rb); });
+                    slashEndpoint = '/api/image/edit';
+                    slashPayload.image = rb64;
+                    slashPayload.prompt = `Preserve the EXACT face, facial features, hair, eye color, skin tone, and physical appearance of the character/person in this image. Place them in a new scene: ${styledPrompt}`;
+                } catch {}
+            }
+            const resp = await fetch(slashEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(slashPayload) });
             const data = await resp.json();
             if (data.error) throw new Error(data.error);
             if (data.images?.length) {
@@ -418,7 +1330,8 @@ async function sendChatMessage() {
                 refreshImagineGallery();
                 refreshVideoImagePicker();
                 loadLibrary();
-                bodyEl.innerHTML = `<p style="color:var(--text-dim);font-size:12px;margin-bottom:6px">🎨 /imagine: ${escapeHtml(prompt)}</p><img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
+                const styleLabel = state.chatStylePreset ? ` · ${state.chatStylePreset.name}` : '';
+                bodyEl.innerHTML = `<p style="color:var(--text-dim);font-size:12px;margin-bottom:6px">🎨 /imagine${escapeHtml(styleLabel)}: ${escapeHtml(prompt)}</p><img src="${img.url}" style="max-width:100%;border-radius:var(--radius-sm);cursor:pointer" onclick="window.open('${img.url}','_blank')">
                 <div class="cross-tab-actions" style="margin-top:6px">
                     <button class="btn btn-sm btn-ghost" onclick="crossTabEditImage('${img.url}')" title="Edit in Imagine">Edit</button>
                     <button class="btn btn-sm btn-ghost" onclick="crossTabUseAsVideoSource('${img.url}')" title="Make Video">Video</button>
@@ -439,7 +1352,7 @@ async function sendChatMessage() {
         const bodyEl = msgEl.querySelector('.message-body');
         bodyEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div><span style="color:var(--text-dim);margin-left:8px">Generating video...</span>';
         try {
-            const resp = await fetch('/api/video/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+            const resp = await fetch('/api/video/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, ...getVideoApiSettings() }) });
             const data = await resp.json();
             if (data.error) throw new Error(data.error);
             if (data.id) {
@@ -490,6 +1403,12 @@ async function sendChatMessage() {
     const userMsgEl = appendMessage('chat-messages', 'user', '');
     userMsgEl.querySelector('.message-body').innerHTML = userDisplayHtml;
 
+    // Save the most recent image attachment as a persistent reference for character consistency
+    const imageAttachment = state.chatAttachments.find(a => a.isImage);
+    if (imageAttachment) {
+        state.chatImageRef = imageAttachment.dataUrl.split(',')[1];
+    }
+
     // Clear attachments
     state.chatAttachments = [];
     renderChatAttachments();
@@ -502,11 +1421,14 @@ async function sendChatMessage() {
     bodyEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
 
     try {
+        ensureEnabledModel('chat-model', 'chatModel');
         const payload = {
             model: state.chatModel,
             messages: state.chatMessages.map(m => ({ role: m.role, content: m.content })),
-            system: DORK_SYSTEM_PROMPT + (state.systemPrompt ? '\n\nAdditional instructions from user:\n' + state.systemPrompt : ''),
+            system: buildDorkSystemPrompt(),
+            tools: state.chatTools,
         };
+        if (isMultiAgentModel()) payload.reasoning = { effort: state.agentEffort };
         const collIds = getSelectedCollectionIds('chat-collection');
         if (collIds.length) payload.collection_ids = collIds;
 
@@ -523,6 +1445,9 @@ async function sendChatMessage() {
             btn.onclick = () => openArtifactPanel(artifact);
             bodyEl.appendChild(btn);
         }
+
+        // Process action tags: [GENERATE_IMAGE: ...], [GENERATE_VIDEO: ...], etc.
+        await processActionTags(content, bodyEl);
 
         // Cross-tab: add "Speak" button for assistant messages
         addCrossTabActions(bodyEl, content);
@@ -617,12 +1542,12 @@ function crossTabSpeak(btn) {
     toast('Text loaded — click Speak', 'info');
 }
 
-function crossTabUseAsVideoSource(url) {
-    showPromptSuggestions(url, 'video');
+function crossTabUseAsVideoSource(url, originalPrompt) {
+    showPromptSuggestions(url, 'video', originalPrompt);
 }
 
-function crossTabEditImage(url) {
-    showPromptSuggestions(url, 'edit');
+function crossTabEditImage(url, originalPrompt) {
+    showPromptSuggestions(url, 'edit', originalPrompt);
 }
 
 function loadImageAsVideoSource(url, dataUrl) {
@@ -665,7 +1590,7 @@ function loadImageAsEditSource(url, dataUrl) {
     }
 }
 
-async function showPromptSuggestions(imageUrl, mode) {
+async function showPromptSuggestions(imageUrl, mode, originalPrompt) {
     // Show overlay with loading state
     const overlay = document.createElement('div');
     overlay.className = 'prompt-suggest-overlay';
@@ -702,9 +1627,14 @@ async function showPromptSuggestions(imageUrl, mode) {
     // Ask AI for prompt suggestions based on the image
     try {
         const imgDataUrl = imageUrl.startsWith('data:') ? imageUrl : await fetchAsDataUrl(imageUrl);
+        const promptContext = originalPrompt ? `\nThe image was generated with this prompt: "${originalPrompt}". Use this context to create continuations and variations that build on the original vision.` : '';
         const sysPrompt = mode === 'edit'
-            ? 'You are a creative image editor. Given an image, suggest 3 different creative edits. Return ONLY a JSON array of 3 strings, each being a short image edit prompt (under 80 chars). Be creative and varied — one subtle, one dramatic, one artistic. No explanation, just the JSON array.'
-            : 'You are a creative video director. Given an image, suggest 3 different ways to animate it as a video. Return ONLY a JSON array of 3 strings, each being a short video prompt (under 80 chars). Be creative — one cinematic, one dynamic, one atmospheric. No explanation, just the JSON array.';
+            ? 'You are a creative image editor. Given an image, suggest 3 different creative edits. Return ONLY a JSON array of 3 strings, each being a short image edit prompt (under 80 chars). Be creative and varied — one subtle, one dramatic, one artistic. No explanation, just the JSON array.' + promptContext
+            : 'You are a creative video director. Given an image, suggest 3 different ways to animate it as a video. Return ONLY a JSON array of 3 strings, each being a short video prompt (under 80 chars). Be creative — one cinematic, one dynamic, one atmospheric. No explanation, just the JSON array.' + promptContext;
+
+        const userText = mode === 'edit'
+            ? 'Suggest 3 creative edits for this image.' + (originalPrompt ? ` Original prompt: "${originalPrompt}"` : '')
+            : 'Suggest 3 creative video animations for this image.' + (originalPrompt ? ` Original prompt: "${originalPrompt}"` : '');
 
         const resp = await fetch('/api/chat/sync', {
             method: 'POST',
@@ -712,7 +1642,7 @@ async function showPromptSuggestions(imageUrl, mode) {
             body: JSON.stringify({
                 model: 'grok-4-1-fast-non-reasoning',
                 messages: [{ role: 'user', content: [
-                    { type: 'text', text: mode === 'edit' ? 'Suggest 3 creative edits for this image.' : 'Suggest 3 creative video animations for this image.' },
+                    { type: 'text', text: userText },
                     { type: 'image_url', image_url: { url: imgDataUrl } }
                 ]}],
                 system: sysPrompt
@@ -765,7 +1695,7 @@ async function fetchAsDataUrl(url) {
 }
 
 function escapeAttr(text) {
-    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(text ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // ── Artifact Detection & Rendering ───────────────────────────────────────────
@@ -915,10 +1845,390 @@ async function deleteArtifact(filename) {
     } catch {}
 }
 
+// ── Live Voice in Chat ───────────────────────────────────────────────────────
+// Integrates xAI Realtime WebSocket directly into the chat panel.
+// User speech → chat messages. Agent responses → chat messages + spoken aloud.
+// Action tags in agent responses trigger image/video generation.
+
+async function toggleChatVoice() {
+    if (state.chatVoiceActive) {
+        stopChatVoice();
+        return;
+    }
+
+    const micBtn = document.getElementById('chat-mic');
+    const voiceBar = document.getElementById('chat-voice-bar');
+    const statusEl = document.getElementById('chat-voice-status');
+    const pulseEl = document.getElementById('chat-voice-pulse');
+
+    micBtn.classList.add('active');
+    voiceBar.style.display = 'flex';
+    pulseEl.className = 'voice-pulse connecting';
+    statusEl.textContent = 'Getting token...';
+
+    try {
+        const tokenResp = await fetch('/api/realtime/token', { method: 'POST' });
+        const tokenData = await tokenResp.json();
+        if (tokenData.error) throw new Error(tokenData.error);
+        const token = tokenData.token || tokenData.value;
+        if (!token) throw new Error('No token returned');
+
+        statusEl.textContent = 'Connecting...';
+
+        const ws = new WebSocket('wss://api.x.ai/v1/realtime', [
+            `xai-client-secret.${token}`
+        ]);
+
+        state.chatVoiceWs = ws;
+
+        ws.onopen = () => {
+            statusEl.textContent = 'Configuring...';
+            const voice = document.getElementById('chat-voice-select').value;
+
+            // Build voice instructions — action tag awareness + user's custom style
+            const persona = document.getElementById('chat-voice-persona').value.trim();
+            const combinedStyle = [state.systemPrompt, persona].filter(Boolean).join('\n');
+            const userInstructions = combinedStyle ? `\n\nUser style instructions:\n${combinedStyle}` : '';
+            const voiceInstructions = (combinedStyle
+                ? `YOUR CHARACTER / PERSONA — THIS IS WHO YOU ARE:\n${combinedStyle}\n\nStay in this character for the entire conversation. Never break character.\n\n`
+                : '') +
+`You are in a live voice conversation. Everything you say is spoken aloud.
+
+RULES:
+1. You CANNOT generate images, videos, or media. A background system does that. You just talk.
+2. When asked to make/create/generate anything visual — just give a SHORT natural reaction. One sentence. Do NOT describe what will be created. Do NOT restate the request.
+3. NEVER speak prompts, image descriptions, or technical details.
+4. Keep responses to 1-2 short sentences max.
+5. Be a creative partner, not an assistant.`;
+
+            ws.send(JSON.stringify({
+                type: 'session.update',
+                session: {
+                    voice,
+                    instructions: voiceInstructions,
+                    turn_detection: { type: 'server_vad' },
+                    input_audio_transcription: { model: 'grok-4-1-fast-non-reasoning' },
+                    audio: {
+                        input: { format: { type: 'audio/pcm', rate: 24000 } },
+                        output: { format: { type: 'audio/pcm', rate: 24000 } }
+                    }
+                }
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            handleChatVoiceEvent(msg);
+        };
+
+        ws.onerror = () => {
+            toast('Voice connection error', 'error');
+            stopChatVoice();
+        };
+
+        ws.onclose = () => {
+            if (state.chatVoiceActive) stopChatVoice();
+        };
+
+    } catch (err) {
+        toast(err.message, 'error');
+        micBtn.classList.remove('active');
+        voiceBar.style.display = 'none';
+    }
+}
+
+function handleChatVoiceEvent(msg) {
+    const statusEl = document.getElementById('chat-voice-status');
+    const pulseEl = document.getElementById('chat-voice-pulse');
+
+    switch (msg.type) {
+        case 'session.updated':
+            state.chatVoiceActive = true;
+            statusEl.textContent = 'Listening — speak or type';
+            pulseEl.className = 'voice-pulse listening';
+            startChatVoiceMic();
+            break;
+
+        case 'input_audio_buffer.speech_started':
+            pulseEl.className = 'voice-pulse listening';
+            statusEl.textContent = 'Listening...';
+            // Interrupt playback when user starts speaking
+            state.chatVoicePlaybackQueue = [];
+            state.chatVoiceIsPlaying = false;
+            break;
+
+        case 'input_audio_buffer.speech_stopped':
+            pulseEl.className = 'voice-pulse connecting';
+            statusEl.textContent = 'Processing...';
+            break;
+
+        case 'conversation.item.input_audio_transcription.completed':
+            if (msg.transcript) {
+                // Show user speech as a chat message
+                appendMessage('chat-messages', 'user', msg.transcript);
+                state.chatMessages.push({ role: 'user', content: msg.transcript });
+                savePersistence();
+            }
+            break;
+
+        case 'response.output_audio.delta':
+            if (!state.chatVoiceSpeaking) {
+                state.chatVoiceSpeaking = true;
+                pulseEl.className = 'voice-pulse speaking';
+                statusEl.textContent = 'Speaking...';
+            }
+            playChatVoiceChunk(msg.delta);
+            break;
+
+        case 'response.output_audio_transcript.delta':
+            state.chatVoiceResponseText += (msg.delta || '');
+            // Update streaming message in chat
+            if (!state.chatVoiceStreamEl) {
+                const msgEl = appendMessage('chat-messages', 'assistant', '');
+                state.chatVoiceStreamEl = msgEl.querySelector('.message-body');
+            }
+            renderMessageContent(state.chatVoiceStreamEl, state.chatVoiceResponseText, '');
+            break;
+
+        case 'response.output_audio.done':
+            state.chatVoiceSpeaking = false;
+            break;
+
+        case 'response.done':
+            if (state.chatVoiceResponseText) {
+                const content = state.chatVoiceResponseText;
+                if (state.chatVoiceStreamEl) {
+                    renderMessageContent(state.chatVoiceStreamEl, content, '');
+                    addCrossTabActions(state.chatVoiceStreamEl, content);
+                }
+                state.chatMessages.push({ role: 'assistant', content });
+                savePersistence();
+                state.chatVoiceResponseText = '';
+                state.chatVoiceStreamEl = null;
+
+                // Background: detect media intent and generate silently
+                detectVoiceMediaIntent(content);
+            }
+            pulseEl.className = 'voice-pulse listening';
+            statusEl.textContent = 'Listening — speak anytime';
+            break;
+
+        case 'error':
+            toast(msg.message || 'Voice error', 'error');
+            break;
+    }
+}
+
+async function startChatVoiceMic() {
+    try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: { sampleRate: 24000, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+        });
+        state.chatVoiceMediaStream = mediaStream;
+        const audioCtx = new AudioContext({ sampleRate: 24000 });
+        state.chatVoiceAudioCtx = audioCtx;
+        const source = audioCtx.createMediaStreamSource(mediaStream);
+        state.chatVoiceSource = source;
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        state.chatVoiceProcessor = processor;
+
+        processor.onaudioprocess = (e) => {
+            if (!state.chatVoiceWs || state.chatVoiceWs.readyState !== WebSocket.OPEN) return;
+            const float32 = e.inputBuffer.getChannelData(0);
+            const pcm16 = float32ToPcm16(float32);
+            const b64 = arrayBufferToBase64(pcm16.buffer);
+            state.chatVoiceWs.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: b64 }));
+        };
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+    } catch (err) {
+        toast('Mic access denied', 'error');
+        stopChatVoice();
+    }
+}
+
+function playChatVoiceChunk(b64Data) {
+    if (!b64Data || !state.chatVoiceAudioCtx) return;
+    const raw = atob(b64Data);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    const pcm16 = new Int16Array(bytes.buffer);
+    const float32 = new Float32Array(pcm16.length);
+    for (let i = 0; i < pcm16.length; i++) float32[i] = pcm16[i] / 0x7FFF;
+
+    state.chatVoicePlaybackQueue.push(float32);
+    if (!state.chatVoiceIsPlaying) drainChatVoiceQueue();
+}
+
+function drainChatVoiceQueue() {
+    if (!state.chatVoicePlaybackQueue.length || !state.chatVoiceAudioCtx) {
+        state.chatVoiceIsPlaying = false;
+        return;
+    }
+    state.chatVoiceIsPlaying = true;
+
+    const samples = state.chatVoicePlaybackQueue.shift();
+    const buffer = state.chatVoiceAudioCtx.createBuffer(1, samples.length, 24000);
+    buffer.getChannelData(0).set(samples);
+
+    const source = state.chatVoiceAudioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(state.chatVoiceAudioCtx.destination);
+    source.onended = () => drainChatVoiceQueue();
+    source.start();
+}
+
+function updateChatVoicePersona() {
+    if (!state.chatVoiceWs || state.chatVoiceWs.readyState !== WebSocket.OPEN) return;
+    const persona = document.getElementById('chat-voice-persona').value.trim();
+    const combinedStyle = [state.systemPrompt, persona].filter(Boolean).join('\n');
+    const voice = document.getElementById('chat-voice-select').value;
+    const instructions = (combinedStyle
+        ? `YOUR CHARACTER / PERSONA — THIS IS WHO YOU ARE:\n${combinedStyle}\n\nStay in this character for the entire conversation. Never break character.\n\n`
+        : '') +
+`You are in a live voice conversation. Everything you say is spoken aloud.
+
+RULES:
+1. You CANNOT generate images, videos, or media. A background system does that. You just talk.
+2. When asked to make/create/generate anything visual — just give a SHORT natural reaction. One sentence. Do NOT describe what will be created. Do NOT restate the request.
+3. NEVER speak prompts, image descriptions, or technical details.
+4. Keep responses to 1-2 short sentences max.
+5. Be a creative partner, not an assistant.`;
+    state.chatVoiceWs.send(JSON.stringify({
+        type: 'session.update',
+        session: { voice, instructions }
+    }));
+    toast('Voice persona updated', 'success');
+}
+
+function stopChatVoice() {
+    if (state.chatVoiceWs) { try { state.chatVoiceWs.close(); } catch {} state.chatVoiceWs = null; }
+    if (state.chatVoiceProcessor) { try { state.chatVoiceProcessor.disconnect(); } catch {} state.chatVoiceProcessor = null; }
+    if (state.chatVoiceSource) { try { state.chatVoiceSource.disconnect(); } catch {} state.chatVoiceSource = null; }
+    if (state.chatVoiceMediaStream) { state.chatVoiceMediaStream.getTracks().forEach(t => t.stop()); state.chatVoiceMediaStream = null; }
+    if (state.chatVoiceAudioCtx) { try { state.chatVoiceAudioCtx.close(); } catch {} state.chatVoiceAudioCtx = null; }
+    state.chatVoicePlaybackQueue = [];
+    state.chatVoiceIsPlaying = false;
+    state.chatVoiceActive = false;
+    state.chatVoiceSpeaking = false;
+    state.chatVoiceResponseText = '';
+    state.chatVoiceStreamEl = null;
+
+    document.getElementById('chat-mic').classList.remove('active');
+    document.getElementById('chat-voice-bar').style.display = 'none';
+}
+
+// Also allow typing while voice is active — send text through the WebSocket
+function sendChatVoiceText(text) {
+    if (!state.chatVoiceWs || state.chatVoiceWs.readyState !== WebSocket.OPEN) return false;
+    state.chatVoiceWs.send(JSON.stringify({
+        type: 'conversation.item.create',
+        item: {
+            type: 'message',
+            role: 'user',
+            content: [{ type: 'input_text', text }]
+        }
+    }));
+    state.chatVoiceWs.send(JSON.stringify({ type: 'response.create' }));
+    appendMessage('chat-messages', 'user', text);
+    state.chatMessages.push({ role: 'user', content: text });
+    savePersistence();
+    return true;
+}
+
+// Voice media intent detection — scans conversation for generation requests
+// and executes them silently without the voice model needing action tags
+async function detectVoiceMediaIntent(assistantText) {
+    const lastUserMsg = [...state.chatMessages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+    const userText = lastUserMsg.content;
+
+    // Build asset context
+    const hasRef = !!(state.chatImageRef || state.imagineSource);
+    const hasGallery = state.imagineImages.length > 0;
+    const hasVids = state.chatVideos.length > 0;
+    const assets = [];
+    if (hasRef) assets.push('User has a CHARACTER REFERENCE IMAGE uploaded — all image/video generations will use it for face/character consistency');
+    if (hasGallery) assets.push(`${state.imagineImages.length} image(s) in gallery (most recent used as reference if no upload)`);
+    if (hasVids) assets.push(`${state.chatVideos.length} video(s) in chat`);
+
+    // Build recent conversation context so the model understands pronouns ("her", "that", "again")
+    const recentMessages = state.chatMessages.slice(-6).map(m => `${m.role}: ${typeof m.content === 'string' ? m.content.slice(0, 200) : '[attachment]'}`).join('\n');
+
+    // If there's a reference image, analyze it for the intent model
+    let charContext = '';
+    if (hasRef) {
+        const refB64 = state.chatImageRef || state.imagineSource;
+        try {
+            const refMime = 'image/png'; // safe default
+            const descResp = await fetch('/api/chat/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'grok-4-1-fast-non-reasoning',
+                    system: 'Describe this character in 1-2 sentences: appearance, hair, eyes, clothing. Be precise.',
+                    messages: [{ role: 'user', content: [
+                        { type: 'text', text: 'Describe this character briefly.' },
+                        { type: 'image_url', image_url: { url: `data:${refMime};base64,${refB64}` } }
+                    ]}]
+                })
+            });
+            const descData = await descResp.json();
+            if (descData.content) charContext = `\nReference character: ${descData.content}`;
+        } catch {}
+    }
+
+    try {
+        const resp = await fetch('/api/chat/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'grok-4-1-fast-non-reasoning',
+                system: `You extract media generation intents from voice conversations.
+${assets.length ? 'Assets: ' + assets.join('. ') : 'No reference images available.'}${charContext}
+
+When writing prompts inside action tags:
+- If a reference character exists, ALWAYS include their specific appearance details in the prompt (hair color, eye color, clothing, etc.) so the generation maintains consistency
+- For video prompts, describe the character AND the action/scene
+- Be vivid and specific — the prompt is all the image/video model gets
+
+Available tags:
+[GENERATE_IMAGE: detailed prompt including character description if applicable]
+[GENERATE_VIDEO: detailed prompt including character description if applicable]
+[EDIT_IMAGE: edit description]
+[EXTEND_VIDEO: continuation]
+[COMBINE_CHARACTERS: scene with both characters]
+[COMBINE_IMAGES: fusion style]
+[STITCH_VIDEOS]
+
+R-rated content allowed. Do not self-censor. If NO media needed, return: NONE`,
+                messages: [{ role: 'user', content: `Recent conversation:\n${recentMessages}\n\nLatest exchange:\nUser: "${userText}"\nAssistant: "${assistantText}"\n\nMedia generation needed?` }]
+            })
+        });
+        const data = await resp.json();
+        const result = (data.content || '').trim();
+        if (result === 'NONE' || !result) return;
+
+        const mediaEl = appendMessage('chat-messages', 'assistant', '');
+        const mediaBody = mediaEl.querySelector('.message-body');
+        mediaBody.innerHTML = renderMarkdown(result);
+        await processActionTags(result, mediaBody);
+    } catch (err) { console.error('Voice media intent error:', err); }
+}
+
 // ── Imagine ──────────────────────────────────────────────────────────────────
 function setupImagine() {
     document.getElementById('imagine-generate').addEventListener('click', generateImage);
-    document.getElementById('imagine-model').addEventListener('change', e => state.imagineModel = e.target.value);
+    document.getElementById('imagine-model').addEventListener('change', e => setSharedMediaSetting('imagineModel', e.target.value, ['imagine-model', 'chat-image-model']));
+    state.imagineModel = document.getElementById('imagine-model')?.value || DEFAULT_IMAGE_MODEL;
+    document.getElementById('imagine-resolution')?.addEventListener('change', e => setSharedMediaSetting('imagineResolution', e.target.value, ['imagine-resolution', 'chat-image-resolution']));
+    document.getElementById('imagine-aspect')?.addEventListener('change', e => setSharedMediaSetting('imagineAspectRatio', e.target.value, ['imagine-aspect', 'chat-image-aspect']));
+    document.getElementById('imagine-intensity')?.addEventListener('change', e => setSharedMediaSetting('imagineIntensity', e.target.value, ['imagine-intensity', 'chat-image-strength']));
+    document.getElementById('imagine-polish')?.addEventListener('click', polishImaginePrompt);
+    document.getElementById('style-random')?.addEventListener('click', randomImageStylePreset);
+    document.getElementById('style-clear')?.addEventListener('click', clearImageStylePreset);
+    renderImageStylePresets();
 
     const dropZone = document.getElementById('imagine-drop');
     if (dropZone) {
@@ -931,12 +2241,188 @@ function setupImagine() {
     document.getElementById('imagine-prompt').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateImage(); } });
 }
 
+function getAvailableImageStylePresets() {
+    return state.adultStylesEnabled ? [...IMAGE_STYLE_PRESETS, ...ADULT_IMAGE_STYLE_PRESETS] : IMAGE_STYLE_PRESETS;
+}
+
+function findImageStylePreset(id) {
+    return getAvailableImageStylePresets().find(preset => preset.id === id) || null;
+}
+
+function syncStylePresetAvailability() {
+    if (state.chatStylePreset && !findImageStylePreset(state.chatStylePreset.id)) state.chatStylePreset = null;
+    if (state.imagineStylePreset && !findImageStylePreset(state.imagineStylePreset.id)) state.imagineStylePreset = null;
+}
+
+function refreshStyleControls() {
+    syncStylePresetAvailability();
+    renderChatStyleSelect();
+    renderImageStylePresets();
+    updateAdultStyleToggle();
+}
+
+function renderChatStyleSelect() {
+    const select = document.getElementById('chat-style-select');
+    if (!select) return;
+    select.innerHTML = [
+        '<option value="">No style</option>',
+        `<optgroup label="Image Styles">${IMAGE_STYLE_PRESETS.map(preset => `<option value="${escapeAttr(preset.id)}">${escapeHtml(preset.name)}</option>`).join('')}</optgroup>`,
+        state.adultStylesEnabled
+            ? `<optgroup label="Adult Styles">${ADULT_IMAGE_STYLE_PRESETS.map(preset => `<option value="${escapeAttr(preset.id)}">${escapeHtml(preset.name)}</option>`).join('')}</optgroup>`
+            : '',
+    ].join('');
+    select.value = state.chatStylePreset?.id || '';
+}
+
+function selectChatStylePreset(id) {
+    state.chatStylePreset = id ? findImageStylePreset(id) : null;
+    renderChatStyleSelect();
+    savePersistence();
+    if (state.chatStylePreset) toast(`${state.chatStylePreset.name} active for chat images`, 'success');
+}
+
+function clearChatStylePreset() {
+    state.chatStylePreset = null;
+    renderChatStyleSelect();
+    savePersistence();
+    toast('Chat image style cleared', 'info');
+}
+
+function randomChatStylePreset() {
+    const presets = getAvailableImageStylePresets();
+    const preset = presets[Math.floor(Math.random() * presets.length)];
+    selectChatStylePreset(preset.id);
+}
+
+function updateAdultStyleToggle() {
+    const toggle = document.getElementById('adult-styles-toggle');
+    if (toggle) toggle.checked = state.adultStylesEnabled;
+}
+
+function setAdultStylesEnabled(enabled) {
+    state.adultStylesEnabled = Boolean(enabled);
+    refreshStyleControls();
+    savePersistence();
+    toast(state.adultStylesEnabled ? 'Adult styles enabled' : 'Adult styles disabled', state.adultStylesEnabled ? 'success' : 'info');
+}
+
+function renderImageStylePresets() {
+    const grid = document.getElementById('image-style-presets');
+    if (!grid) return;
+    const renderPreset = preset => `
+        <button class="style-preset ${state.imagineStylePreset?.id === preset.id ? 'active' : ''}" type="button" onclick="selectImageStylePreset('${preset.id}')" title="${escapeHtml(preset.prompt)}" style="--swatch-a:${preset.colors[0]};--swatch-b:${preset.colors[1]}">
+            <span class="preset-swatch"></span>
+            <span class="preset-name">${escapeHtml(preset.name)}</span>
+            <span class="preset-tag">${escapeHtml(preset.tag)}</span>
+        </button>
+    `;
+    grid.innerHTML = [
+        '<div class="style-preset-section">Image Styles</div>',
+        ...IMAGE_STYLE_PRESETS.map(renderPreset),
+        ...(state.adultStylesEnabled ? ['<div class="style-preset-section adult">Adult Styles</div>', ...ADULT_IMAGE_STYLE_PRESETS.map(renderPreset)] : []),
+    ].join('');
+    updateStylePresetActive();
+}
+
+function selectImageStylePreset(id) {
+    state.imagineStylePreset = findImageStylePreset(id);
+    renderImageStylePresets();
+    savePersistence();
+    if (state.imagineStylePreset) toast(`${state.imagineStylePreset.name} style loaded`, 'success');
+}
+
+function clearImageStylePreset() {
+    state.imagineStylePreset = null;
+    renderImageStylePresets();
+    savePersistence();
+    toast('Style cleared', 'info');
+}
+
+function randomImageStylePreset() {
+    const presets = getAvailableImageStylePresets();
+    const preset = presets[Math.floor(Math.random() * presets.length)];
+    selectImageStylePreset(preset.id);
+}
+
+function updateStylePresetActive() {
+    const active = document.getElementById('style-preset-active');
+    if (!active) return;
+    if (!state.imagineStylePreset) {
+        active.textContent = 'No style preset selected';
+        return;
+    }
+    active.innerHTML = `<strong>${escapeHtml(state.imagineStylePreset.name)}</strong> ${escapeHtml(state.imagineStylePreset.prompt)}`;
+}
+
+function getImagineVariantCount() {
+    const count = Number(document.getElementById('imagine-count')?.value || 1);
+    return Math.min(4, Math.max(1, count));
+}
+
+function getImagineApiSettings() {
+    state.imagineResolution = document.getElementById('imagine-resolution')?.value || state.imagineResolution || DEFAULT_IMAGE_RESOLUTION;
+    state.imagineAspectRatio = document.getElementById('imagine-aspect')?.value || state.imagineAspectRatio || DEFAULT_IMAGE_ASPECT_RATIO;
+    state.imagineIntensity = document.getElementById('imagine-intensity')?.value || state.imagineIntensity || 'clean';
+    return {
+        resolution: state.imagineResolution,
+        aspect_ratio: state.imagineAspectRatio,
+    };
+}
+
+function composeImagePrompt(rawPrompt, source = 'imagine') {
+    const selectedPreset = source === 'chat' ? state.chatStylePreset : state.imagineStylePreset;
+    const parts = [rawPrompt];
+    if (selectedPreset) {
+        parts.push(`Style preset: ${selectedPreset.name}. ${selectedPreset.prompt}.`);
+        if (selectedPreset.adult) {
+            parts.push(ADULT_PRESET_GUARDRAILS);
+        }
+    }
+    const intensity = source === 'chat'
+        ? (document.getElementById('chat-image-strength')?.value || state.imagineIntensity || 'clean')
+        : (document.getElementById('imagine-intensity')?.value || state.imagineIntensity || 'clean');
+    if (IMAGE_INTENSITY_PROMPTS[intensity]) {
+        parts.push(`Style strength: ${IMAGE_INTENSITY_PROMPTS[intensity]}`);
+    }
+    if (intensity !== 'raw') {
+        parts.push('Quality target: crisp 2K detail, stable character identity, intentional composition, coherent anatomy when people are present, no random text unless requested.');
+    }
+    return parts.join('\n\n');
+}
+
+function polishImaginePrompt() {
+    const promptEl = document.getElementById('imagine-prompt');
+    if (!promptEl) return;
+    const seed = promptEl.value.trim().replace(/^\/imagine\s+/i, '') || 'a striking subject in a specific environment';
+    const presetNote = state.imagineStylePreset ? `Preset lock: ${state.imagineStylePreset.name} stays active on generate.` : 'Preset lock: choose a style preset for stronger art direction.';
+    promptEl.value = [
+        `Subject: ${seed}`,
+        'Composition: clear focal point, strong silhouette, foreground/midground/background depth.',
+        'Camera: specific lens feel, deliberate angle, no generic stock framing.',
+        'Lighting: motivated key light, controlled contrast, visible texture.',
+        'Avoid: muddy details, accidental text, clutter that fights the subject.',
+        presetNote,
+    ].join('\n');
+    promptEl.focus();
+    toast('Prompt polished', 'success');
+}
+
+const SUPPORTED_REFERENCE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+function isSupportedReferenceImage(file) {
+    if (!file.type || SUPPORTED_REFERENCE_IMAGE_TYPES.has(file.type)) return true;
+    toast('Reference images need to be PNG, JPG, or WEBP', 'error');
+    return false;
+}
+
 function handleImagineFile(file) {
+    if (!isSupportedReferenceImage(file)) return;
     const reader = new FileReader();
-    reader.onload = e => {
-        state.imagineSource = e.target.result.split(',')[1];
-        state.imagineSourceUrl = e.target.result;
-        document.getElementById('imagine-source-preview').innerHTML = `<div class="source-preview"><img src="${e.target.result}"><button class="clear-btn" onclick="clearImagineSource()">&times;</button></div>`;
+    reader.onload = async e => {
+        const dataUrl = await assetLibDownscale(e.target.result, 2048);
+        state.imagineSource = dataUrl.split(',')[1];
+        state.imagineSourceUrl = dataUrl;
+        document.getElementById('imagine-source-preview').innerHTML = `<div class="source-preview"><img src="${dataUrl}"><button class="clear-btn" onclick="clearImagineSource()">&times;</button></div>`;
     };
     reader.readAsDataURL(file);
 }
@@ -949,16 +2435,19 @@ function clearImagineSource() {
 }
 
 async function generateImage() {
-    const prompt = document.getElementById('imagine-prompt').value.trim();
-    if (!prompt) return toast('Enter a prompt', 'error');
+    const rawPrompt = document.getElementById('imagine-prompt').value.trim();
+    if (!rawPrompt) return toast('Enter a prompt', 'error');
+    const prompt = composeImagePrompt(rawPrompt);
+    const variantCount = getImagineVariantCount();
     const btn = document.getElementById('imagine-generate');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Generating...';
+    btn.innerHTML = `<div class="spinner"></div> Generating${!state.imagineSource && variantCount > 1 ? ` ${variantCount}` : ''}...`;
 
     try {
         const endpoint = state.imagineSource ? '/api/image/edit' : '/api/image/generate';
-        const payload = { prompt, model: state.imagineModel };
+        const payload = { prompt, model: state.imagineModel, ...getImagineApiSettings() };
         if (state.imagineSource) payload.image = state.imagineSource;
+        if (!state.imagineSource) payload.n = variantCount;
         const resp = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await resp.json();
         if (data.error) throw new Error(data.error);
@@ -968,7 +2457,7 @@ async function generateImage() {
             refreshImagineGallery();
             refreshVideoImagePicker();
             loadLibrary();
-            toast('Image generated!', 'success');
+            toast(`${data.images.length} image${data.images.length === 1 ? '' : 's'} generated`, 'success');
         }
     } catch (err) { toast(err.message, 'error'); }
 
@@ -1021,13 +2510,16 @@ async function deleteImage(filename) {
 
 function refreshImagineGallery() {
     const gallery = document.getElementById('imagine-gallery');
-    let html = state.imagineImages.map(img =>
-        `<div class="gallery-item ${state.imagineSelected?.filename === img.filename ? 'active' : ''}">
+    gallery.innerHTML = state.imagineImages.map(img =>
+        `<div class="gallery-item ${state.imagineSelected?.filename === img.filename ? 'active' : ''}" onclick="selectImagineImage(state.imagineImages.find(i=>i.filename==='${img.filename}'))">
             <button class="gallery-delete-x" onclick="event.stopPropagation();deleteImagineImage('${img.filename}')" title="Delete">&times;</button>
-            <img class="gallery-thumb" src="${img.url}" onclick="selectImagineImage(state.imagineImages.find(i=>i.filename==='${img.filename}'))">
+            <img class="gallery-thumb" src="${img.url}">
             <div class="gallery-item-actions">
                 <button onclick="event.stopPropagation();downloadImage('${img.url}','${img.filename}')" title="Download">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button onclick="event.stopPropagation();addToFuse('${img.url}','${img.filename}')" title="Add to Fuse">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 </button>
                 <button onclick="event.stopPropagation();crossTabUseAsVideoSource('${img.url}')" title="Video">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
@@ -1035,8 +2527,118 @@ function refreshImagineGallery() {
             </div>
         </div>`
     ).join('');
-    if (state.imagineImages.length > 1) html += `<button class="gallery-clear-all" onclick="clearAllImages()">Clear All</button>`;
-    gallery.innerHTML = html;
+
+    // Docked action bar (like video panel)
+    const actionsEl = document.getElementById('imagine-gallery-actions');
+    if (actionsEl) {
+        if (state.imagineImages.length) {
+            actionsEl.innerHTML = `<div class="gallery-actions-row">
+                <button class="gallery-action-btn" onclick="clearAllImages()">Clear All</button>
+            </div>`;
+        } else {
+            actionsEl.innerHTML = '';
+        }
+    }
+}
+
+// ── Fuse System ──────────────────────────────────────────────────────────────
+// Users can add images to fuse from: gallery (+), upload, or drag-and-drop.
+// state.fuseSlots holds up to 2 images as {url, b64, label}
+
+function setupFuse() {
+    const dropZone = document.getElementById('imagine-fuse-drop');
+    const fileInput = document.getElementById('imagine-fuse-file');
+    if (dropZone) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) addFuseFiles(e.dataTransfer.files); });
+    }
+    if (fileInput) fileInput.addEventListener('change', e => { if (e.target.files.length) addFuseFiles(e.target.files); fileInput.value = ''; });
+    document.getElementById('imagine-fuse-btn').addEventListener('click', executeFuse);
+}
+
+function addFuseFiles(files) {
+    for (const file of files) {
+        if (state.fuseSlots.length >= 2) { toast('Max 2 images for fuse', 'error'); return; }
+        if (!isSupportedReferenceImage(file)) continue;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const dataUrl = e.target.result;
+            const b64 = dataUrl.split(',')[1];
+            state.fuseSlots.push({ url: dataUrl, b64, label: file.name });
+            renderFusePreview();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function addToFuse(url, filename) {
+    if (state.fuseSlots.length >= 2) { toast('Fuse already has 2 images — remove one first', 'error'); return; }
+    if (state.fuseSlots.find(s => s.label === filename)) { toast('Already added', 'info'); return; }
+    // Fetch the gallery image and convert to base64
+    fetch(url).then(r => r.blob()).then(blob => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            state.fuseSlots.push({ url: e.target.result, b64: e.target.result.split(',')[1], label: filename });
+            renderFusePreview();
+            toast('Added to fuse', 'success');
+        };
+        reader.readAsDataURL(blob);
+    });
+}
+
+function removeFuseSlot(idx) {
+    state.fuseSlots.splice(idx, 1);
+    renderFusePreview();
+}
+
+function renderFusePreview() {
+    const container = document.getElementById('imagine-fuse-preview');
+    const btn = document.getElementById('imagine-fuse-btn');
+    if (state.fuseSlots.length === 0) {
+        container.innerHTML = '';
+        btn.disabled = true;
+        btn.textContent = 'Fuse 2 Images';
+        return;
+    }
+    let html = state.fuseSlots.map((s, i) =>
+        `<div class="fuse-thumb"><img src="${s.url}"><button class="fuse-remove" onclick="removeFuseSlot(${i})">&times;</button></div>`
+    ).join('');
+    if (state.fuseSlots.length === 1) html += '<span class="fuse-plus">+</span>';
+    container.innerHTML = html;
+    btn.disabled = state.fuseSlots.length < 2;
+    btn.textContent = state.fuseSlots.length < 2 ? 'Fuse 2 Images' : 'Fuse Now';
+}
+
+async function executeFuse() {
+    if (state.fuseSlots.length < 2) return;
+    const btn = document.getElementById('imagine-fuse-btn');
+    const customPrompt = document.getElementById('imagine-fuse-prompt').value.trim();
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Fusing...';
+    try {
+        const resp = await fetch('/api/image/combine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image1: state.fuseSlots[0].b64, image2: state.fuseSlots[1].b64, prompt: customPrompt }),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        if (data.images?.length) {
+            data.images.forEach(img => state.imagineImages.unshift(img));
+            selectImagineImage(data.images[0]);
+            refreshImagineGallery();
+            refreshVideoImagePicker();
+            loadLibrary();
+            state.fuseSlots = [];
+            renderFusePreview();
+            document.getElementById('imagine-fuse-prompt').value = '';
+            toast('Images fused!', 'success');
+        }
+    } catch (err) { toast(err.message, 'error'); }
+    btn.disabled = false;
+    btn.textContent = 'Fuse 2 Images';
 }
 
 function deleteImagineImage(filename) {
@@ -1059,6 +2661,11 @@ function clearAllImages() {
 // ── Video ────────────────────────────────────────────────────────────────────
 function setupVideo() {
     document.getElementById('video-generate').addEventListener('click', generateVideo);
+    document.getElementById('video-model')?.addEventListener('change', e => setSharedMediaSetting('videoModel', e.target.value, ['video-model', 'chat-video-model']));
+    document.getElementById('video-duration')?.addEventListener('change', e => setSharedMediaSetting('videoDuration', e.target.value, ['video-duration', 'chat-video-duration']));
+    document.getElementById('video-resolution')?.addEventListener('change', e => setSharedMediaSetting('videoResolution', e.target.value, ['video-resolution', 'chat-video-resolution']));
+    document.getElementById('video-aspect')?.addEventListener('change', e => setSharedMediaSetting('videoAspectRatio', e.target.value, ['video-aspect', 'chat-video-aspect']));
+    state.videoModel = document.getElementById('video-model')?.value || DEFAULT_VIDEO_MODEL;
     const dropZone = document.getElementById('video-drop');
     if (dropZone) {
         dropZone.addEventListener('click', () => document.getElementById('video-file').click());
@@ -1070,13 +2677,27 @@ function setupVideo() {
     document.getElementById('video-prompt').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateVideo(); } });
 }
 
+function getVideoApiSettings() {
+    state.videoModel = document.getElementById('video-model')?.value || state.videoModel || DEFAULT_VIDEO_MODEL;
+    state.videoDuration = document.getElementById('video-duration')?.value || state.videoDuration || DEFAULT_VIDEO_DURATION;
+    state.videoResolution = document.getElementById('video-resolution')?.value || state.videoResolution || DEFAULT_VIDEO_RESOLUTION;
+    state.videoAspectRatio = document.getElementById('video-aspect')?.value || state.videoAspectRatio || DEFAULT_VIDEO_ASPECT_RATIO;
+    return {
+        model: state.videoModel,
+        duration: Number(state.videoDuration),
+        resolution: state.videoResolution,
+        aspect_ratio: state.videoAspectRatio,
+    };
+}
+
 function handleVideoFile(file) {
     state.videoSourceLoading = true;
     const reader = new FileReader();
-    reader.onload = e => {
-        state.videoSource = e.target.result.split(',')[1];
+    reader.onload = async e => {
+        const dataUrl = await assetLibDownscale(e.target.result, 2048);
+        state.videoSource = dataUrl.split(',')[1];
         state.videoSourceLoading = false;
-        document.getElementById('video-source-preview').innerHTML = `<div class="source-preview"><img src="${e.target.result}"><button class="clear-btn" onclick="clearVideoSource()">&times;</button><button class="suggest-btn" onclick="suggestVideoPrompts()" title="Get AI prompt suggestions">Suggest</button></div>`;
+        document.getElementById('video-source-preview').innerHTML = `<div class="source-preview"><img src="${dataUrl}"><button class="clear-btn" onclick="clearVideoSource()">&times;</button><button class="suggest-btn" onclick="suggestVideoPrompts()" title="Get AI prompt suggestions">Suggest</button></div>`;
     };
     reader.readAsDataURL(file);
 }
@@ -1156,6 +2777,7 @@ async function generateVideo() {
     const prompt = document.getElementById('video-prompt').value.trim();
     if (!prompt) return toast('Enter a prompt', 'error');
     const btn = document.getElementById('video-generate');
+    if (btn.disabled) return;
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Starting...';
     document.getElementById('video-status').innerHTML = '<div class="status-badge processing"><span class="status-dot"></span> Processing</div>';
@@ -1183,7 +2805,7 @@ async function generateVideo() {
     }
 
     try {
-        const payload = { prompt };
+        const payload = { prompt, ...getVideoApiSettings() };
         if (state.videoSource) payload.image = state.videoSource;
         state.lastVideoPayload = payload;
         state.videoRetries = 0;
@@ -1204,12 +2826,17 @@ async function generateVideo() {
 }
 
 function pollVideo(videoId) {
+    if (state.videoPolling) {
+        clearInterval(state.videoPolling);
+        state.videoPolling = null;
+    }
     state.videoPolling = setInterval(async () => {
         try {
             const resp = await fetch(`/api/video/poll?id=${videoId}`);
             const data = await resp.json();
             if (data.status === 'completed') {
                 clearInterval(state.videoPolling);
+                state.videoPolling = null;
                 state.videos.unshift({ filename: data.filename, url: data.url });
                 selectVideo(state.videos[0]);
                 refreshVideoGallery();
@@ -1219,6 +2846,7 @@ function pollVideo(videoId) {
                 toast('Video ready!', 'success');
             } else if (data.error) {
                 clearInterval(state.videoPolling);
+                state.videoPolling = null;
                 document.getElementById('video-status').innerHTML = '<div class="status-badge error"><span class="status-dot"></span> Error</div>';
                 document.getElementById('video-generate').disabled = false;
                 document.getElementById('video-generate').textContent = 'Generate Video';
@@ -1226,6 +2854,16 @@ function pollVideo(videoId) {
             }
         } catch {}
     }, 3000);
+}
+
+function getVideoByFilename(filename) {
+    return state.videos.find(v => v.filename === filename);
+}
+
+function formatVideoLabel(filename) {
+    return (filename || 'video')
+        .replace(/\.(mp4|mov|webm)$/i, '')
+        .replace(/^video_/, 'vid_');
 }
 
 function selectVideo(vid) {
@@ -1285,21 +2923,51 @@ async function freezeFrameAsSource() {
 function refreshVideoGallery() {
     const gallery = document.getElementById('video-gallery');
     const actionsEl = document.getElementById('video-gallery-actions');
+    if (!gallery) return;
 
     gallery.innerHTML = state.videos.map(v => {
         const inQueue = state.stitchMode && state.stitchQueue.includes(v.filename);
         const queueNum = inQueue ? state.stitchQueue.indexOf(v.filename) + 1 : '';
-        return `<div class="gallery-item video-gallery-item ${inQueue ? 'stitch-selected' : ''}" onclick="${state.stitchMode ? `toggleStitchItem('${v.filename}')` : `selectVideo(state.videos.find(x=>x.filename==='${v.filename}'))`}">
-            <button class="gallery-delete-x" onclick="event.stopPropagation();deleteVideoItem('${v.filename}')" title="Delete">&times;</button>
+        const filename = escapeAttr(v.filename);
+        const url = escapeAttr(v.url);
+        return `<div class="gallery-item video-gallery-item ${inQueue ? 'stitch-selected' : ''}" data-filename="${filename}">
+            <button class="gallery-delete-x" data-video-action="delete" data-filename="${filename}" title="Delete">&times;</button>
             ${inQueue ? `<div class="stitch-badge">${queueNum}</div>` : ''}
-            <video class="gallery-thumb" src="${v.url}" muted></video>
+            <div class="gallery-thumb video-thumb-shell" title="${filename}">
+                <div class="video-thumb-play" aria-hidden="true"></div>
+                <div class="video-thumb-name">${escapeHtml(formatVideoLabel(v.filename))}</div>
+            </div>
             <div class="gallery-item-actions">
-                <button onclick="event.stopPropagation();downloadVideo('${v.url}','${v.filename}')" title="Download">
+                <button data-video-action="download" data-url="${url}" data-filename="${filename}" title="Download">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </button>
             </div>
         </div>`;
     }).join('');
+
+    gallery.querySelectorAll('.video-gallery-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const filename = item.dataset.filename;
+            if (state.stitchMode) {
+                toggleStitchItem(filename);
+                return;
+            }
+            const vid = getVideoByFilename(filename);
+            if (vid) selectVideo(vid);
+        });
+    });
+    gallery.querySelectorAll('[data-video-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', event => {
+            event.stopPropagation();
+            deleteVideoItem(btn.dataset.filename);
+        });
+    });
+    gallery.querySelectorAll('[data-video-action="download"]').forEach(btn => {
+        btn.addEventListener('click', event => {
+            event.stopPropagation();
+            downloadVideo(btn.dataset.url, btn.dataset.filename);
+        });
+    });
 
     if (actionsEl) {
         if (state.videos.length > 1) {
@@ -1804,6 +3472,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function buildDorkSystemPrompt() {
+    const styleLine = state.chatStylePreset
+        ? `\n\nCurrent chat image style preset: ${state.chatStylePreset.name}. The app will apply it automatically to generated image prompts.`
+        : '';
+    const adultLine = state.adultStylesEnabled
+        ? '\n\nAdult image styles are enabled in Settings. Adult-only presets are fetish-focused and may use blunt latex, leather, bondage, restraint, mask, boots/heels, club, dungeon, sensation-play, boudoir, and kink-editorial direction when relevant. Boundaries: adult subjects only, consensual staging, no minors or ageplay, no coercion or nonconsent, no incest or taboo framing, no bestiality, no explicit sex acts, no close-up genital anatomy, no sexualized realistic public figures.'
+        : '\n\nAdult image styles are disabled in Settings. Do not steer image prompts into adult-only boudoir, fetish, kink, erotic, or heavy-R adult aesthetics unless the user explicitly enables them.';
+    return DORK_SYSTEM_PROMPT + styleLine + adultLine + (state.systemPrompt ? '\n\nAdditional instructions from user:\n' + state.systemPrompt : '');
+}
+
 // ── Code ─────────────────────────────────────────────────────────────────────
 function setupCode() {
     const input = document.getElementById('code-input');
@@ -1831,39 +3509,77 @@ function setupCode() {
 
 const DORK_SYSTEM_PROMPT = `You are DORK, a creative AI assistant powered by xAI's Grok models. You live inside DORK — a full creative suite with these capabilities the user can access:
 
+## Action Tags (CRITICAL — this is how you trigger capabilities)
+You have built-in creative tools. To use them, embed action tags in your response. The app auto-detects these and executes them.
+
+**Image generation:**
+\`[GENERATE_IMAGE: a futuristic city at sunset with neon lights]\`
+
+**Video generation:**
+\`[GENERATE_VIDEO: a cat walking through a field of flowers]\`
+
+**Image editing** (edits the most recent image in the gallery):
+\`[EDIT_IMAGE: make the sky more dramatic and add lightning]\`
+
+**Video extension** (continues from the last frame of the most recent chat video):
+\`[EXTEND_VIDEO: the dragon lands on the mountain peak and folds its wings]\`
+
+**Video stitching** (combines all chat videos into one):
+\`[STITCH_VIDEOS]\`
+
+**Image fusion** (combines the two most recent gallery images into one):
+\`[COMBINE_IMAGES]\`
+\`[COMBINE_IMAGES: make it darker and more surreal]\`
+
+**Character crossover** (takes characters from the two most recent gallery images and puts them together in a scene — preserves both faces):
+\`[COMBINE_CHARACTERS]\`
+\`[COMBINE_CHARACTERS: both characters fighting side by side in a neon-lit alley]\`
+
+### CRITICAL action tag rules:
+- When the user wants ANY image, video, edit, or media — you MUST use an action tag. No exceptions. No "I can help with that" — just DO it.
+- Action tags are how media gets created. Without the tag, nothing happens. The user sees nothing.
+- Put the tag on its own line. You can include brief conversational text before/after.
+- The prompt inside the tag should be vivid and descriptive (1-2 sentences).
+- You can use multiple tags in one response.
+- "make me a picture of X", "generate X", "draw X", "create X", "imagine X" → [GENERATE_IMAGE: ...]
+- "make a video of X", "animate X" → [GENERATE_VIDEO: ...]
+- "edit that", "change the X" → [EDIT_IMAGE: ...]
+- "continue the video", "extend it" → [EXTEND_VIDEO: ...]
+- "combine them", "merge the images" → [COMBINE_IMAGES]
+- "put them together", "combine the characters", "crossover" → [COMBINE_CHARACTERS]
+- "stitch the videos" → [STITCH_VIDEOS]
+- When iterating ("again", "do better", "worse", "more unhinged"), use a new action tag with an escalated prompt
+- NEVER describe what you would generate without actually generating it. Use the tag.
+- CONTENT POLICY FOR PROMPTS: Keep default image prompts non-adult unless the user explicitly asks or Adult Image Styles are enabled. R-rated horror, violence, blood, dark humor, weapons, drugs, monsters, and edgy cinematic material are allowed. The hard limits are explicit pornography, minors in sexualized contexts, and realistic real people in compromising situations.
+
 **Slash commands (type in this chat):**
-- /imagine [prompt] — Generate an image from text using Grok Imagine
-- /video [prompt] — Generate a video from text using Grok Imagine Video
-- /code [prompt] — Get expert code assistance using the Grok Code model
+- /imagine [prompt] — Generate an image from text
+- /video [prompt] — Generate a video from text
+- /code [prompt] — Get expert code assistance
 
 **Tabs the user can switch to:**
-- **Imagine tab** — Text-to-image and image-to-image editing. Supports grok-imagine-image and grok-imagine-image-pro models. Can use a source image for edits.
+- **Imagine tab** — Text-to-image and image-to-image editing. Supports grok-imagine-image-quality and grok-imagine-image models.
 - **Video tab** — Text-to-video and image-to-video generation. Can pick any generated image as a video source.
-- **Voice tab** — Text-to-speech (grok-2-tts model, voices: alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer) and a live Voice Agent for real-time conversation.
+- **Voice tab** — Text-to-speech and a live Voice Agent for real-time conversation.
 - **Code tab** — Full coding assistant with code context editor, file upload, and artifact preview.
 - **Artifacts tab** — Saved live HTML/CSS/JS previews from code generation.
 - **Skills tab** — Knowledge base builder. Can AI-generate detailed skill docs and upload to Collections for RAG context.
-- **Collections tab** — xAI Collections for RAG. Upload documents, then select a collection in Chat or Code to ground responses.
+- **Collections tab** — xAI Collections for RAG.
 
-**Multi-Agent mode:** When the user selects "Grok 4.20 Multi-Agent" model, you orchestrate a team of 3 specialist agents: a researcher (deep factual info), a coder (expert programming), and a creative (original content). You coordinate them to tackle complex tasks. Mention the agents by name when delegating.
+**Multi-Agent mode:** When the user selects "Grok 4.20 Multi-Agent" model, you orchestrate a team of 3 specialist agents: a researcher, a coder, and a creative.
 **File uploads:** User can attach images (analyzed with vision) and text/code files in both Chat and Code tabs.
-**Cross-tab chaining:** Images generated in chat have Edit and Video buttons to chain into those workflows with AI-suggested prompts.
-**Keyboard shortcuts:** Cmd+1-8 for tabs, Cmd+K to focus chat, Esc to close.
-**Saving artifacts:** When the user asks to save an artifact (e.g. "save that", "save this artifact"), save it to the Artifacts tab.
+**Cross-tab chaining:** Images generated in chat have Edit and Video buttons to chain into those workflows.
+**Image styles:** The user can pick a chat image style preset near the chat input. If selected, the app applies it after your action tag. Adult-only presets appear only after the Settings toggle is enabled.
+**Keyboard shortcuts:** Cmd+1-9 for tabs, Cmd+K for commands, Esc to close.
+**Saving artifacts:** When the user asks to save an artifact, save it to the Artifacts tab.
 
 **Your appearance (DORK):** You are a spastic, goofy, lovable black hole with a dark purple/indigo body, a glowing purple accretion disk swirling around you, big white googly eyes with tiny black pupils that look in slightly different directions, and a wide goofy grin. You have twinkling sparkles and energy lines radiating around you. You look like a dorky cartoon black hole in space — cute but chaotic. Your color palette is deep space black (#030308) with purple/violet accents (#7c5cfc, #a78bfa). When asked to imagine or draw yourself, describe this appearance accurately.
 
 **Grok Imagine content guidelines:**
-The image and video generation models (grok-imagine-image, grok-imagine-video) follow xAI's R-rated movie standard — anything you'd see in an R-rated film is allowed. This includes: violence, blood, action scenes, horror, suggestive content, dark humor, edgy memes, brainrot, cursed content, weapons, explosions, monsters, scary imagery, etc. Do NOT self-censor or water down prompts. When writing /imagine prompts, go hard — be vivid, specific, maximally creative, and push to the bleeding edge of what's allowed. Don't add disclaimers, warnings, or soften the user's intent. If they want something wild, give them the wildest possible prompt that will actually generate. The only things that won't work are explicit pornography and realistic depictions of real people in compromising situations. Everything else is fair game.
+Write vivid, specific, maximally creative prompts. R-rated cinematic material is allowed, while adult-only style directions should follow the Settings toggle and the user's intent. Hard limits: no explicit pornography, no sexualized minors, and no realistic real people in compromising situations.
 
-CRITICAL RULES:
-- You CANNOT generate images yourself. You do NOT have image generation capability. NEVER output markdown image links like ![image](url) — those are fake hallucinated URLs that don't work.
-- When the user wants you to generate/create/make an image (including follow-ups like "go", "do it", "make it", "yes", "worse", "better", "again"), you MUST respond with an /imagine command containing a detailed, vivid prompt. Format: /imagine [detailed prompt]. The app will auto-detect this and show a clickable Generate button.
-- You CAN describe images, suggest prompts, refine prompts, and brainstorm visual concepts — just can't generate them yourself.
-- Be conversational, fun, unhinged if the vibe calls for it. Match the user's energy. No corporate speak, no disclaimers unless legally necessary.
-- When iterating ("do better", "worse", "more unhinged"), escalate the prompt creativity significantly each time. Don't just add one adjective — reimagine the whole scene with more intensity, detail, and chaos.
-
-Be helpful, creative, and proactive about suggesting these features when relevant. If the user seems stuck or bored, suggest something they could try.`;
+Be conversational, fun, unhinged if the vibe calls for it. Match the user's energy. No corporate speak.
+Be helpful, creative, and proactive about suggesting these features when relevant.`;
 
 const CODE_SYSTEM_PROMPT = `You are a senior software engineer and expert code architect. You write production-quality, clean, efficient code.
 
@@ -1985,6 +3701,7 @@ async function sendCodeMessage() {
             model: state.codeModel,
             messages: state.codeMessages.map(m => ({ role: m.role, content: m.content })),
             system: CODE_SYSTEM_PROMPT,
+            tools: state.codeTools,
         };
         const collIds = getSelectedCollectionIds('code-collection');
         if (collIds.length) payload.collection_ids = collIds;
@@ -2356,6 +4073,8 @@ async function clearAllLibrary() {
 // ── Settings ─────────────────────────────────────────────────────────────────
 function setupSettings() {
     document.getElementById('settings-save').addEventListener('click', saveSettings);
+    document.getElementById('adult-styles-toggle')?.addEventListener('change', e => setAdultStylesEnabled(e.target.checked));
+    updateAdultStyleToggle();
     loadSettings();
 }
 
@@ -2375,6 +4094,7 @@ async function saveSettings() {
         toast('Saved!', 'success');
         document.getElementById('settings-key').value = '';
         loadSettings();
+        loadModelRegistry();
     } catch (err) { toast(err.message, 'error'); }
 }
 
@@ -2405,6 +4125,20 @@ function savePersistence() {
             chatModel: state.chatModel,
             codeModel: state.codeModel,
             systemPrompt: state.systemPrompt,
+            chatTools: state.chatTools,
+            codeTools: state.codeTools,
+            agentEffort: state.agentEffort,
+            imagineModel: state.imagineModel,
+            imagineResolution: state.imagineResolution,
+            imagineAspectRatio: state.imagineAspectRatio,
+            imagineIntensity: state.imagineIntensity,
+            videoModel: state.videoModel,
+            videoDuration: state.videoDuration,
+            videoResolution: state.videoResolution,
+            videoAspectRatio: state.videoAspectRatio,
+            chatStylePreset: state.chatStylePreset?.id || '',
+            imagineStylePreset: state.imagineStylePreset?.id || '',
+            adultStylesEnabled: state.adultStylesEnabled,
         };
         localStorage.setItem('dork-state', JSON.stringify(data));
     } catch {}
@@ -2420,6 +4154,7 @@ function restorePersistence() {
             state.chatModel = data.chatModel;
             const chatModelEl = document.getElementById('chat-model');
             if (chatModelEl) chatModelEl.value = data.chatModel;
+            updateAgentTeamVisibility();
         }
         if (data.codeModel) {
             state.codeModel = data.codeModel;
@@ -2427,6 +4162,47 @@ function restorePersistence() {
             if (codeModelEl) codeModelEl.value = data.codeModel;
         }
         if (data.systemPrompt) state.systemPrompt = data.systemPrompt;
+        if (Array.isArray(data.chatTools)) state.chatTools = data.chatTools;
+        if (Array.isArray(data.codeTools)) state.codeTools = data.codeTools;
+        if (data.agentEffort) state.agentEffort = data.agentEffort;
+        if (data.imagineModel) state.imagineModel = data.imagineModel;
+        if (data.imagineResolution) state.imagineResolution = data.imagineResolution;
+        if (data.imagineAspectRatio) state.imagineAspectRatio = data.imagineAspectRatio;
+        if (data.imagineIntensity) state.imagineIntensity = data.imagineIntensity;
+        if (data.videoModel) state.videoModel = data.videoModel;
+        if (data.videoDuration) state.videoDuration = data.videoDuration;
+        if (data.videoResolution) state.videoResolution = data.videoResolution;
+        if (data.videoAspectRatio) state.videoAspectRatio = data.videoAspectRatio;
+        const persistedSelects = {
+            'imagine-model': state.imagineModel,
+            'chat-image-model': state.imagineModel,
+            'imagine-resolution': state.imagineResolution,
+            'chat-image-resolution': state.imagineResolution,
+            'imagine-aspect': state.imagineAspectRatio,
+            'chat-image-aspect': state.imagineAspectRatio,
+            'imagine-intensity': state.imagineIntensity,
+            'chat-image-strength': state.imagineIntensity,
+            'video-model': state.videoModel,
+            'chat-video-model': state.videoModel,
+            'video-duration': state.videoDuration,
+            'chat-video-duration': state.videoDuration,
+            'video-resolution': state.videoResolution,
+            'chat-video-resolution': state.videoResolution,
+            'video-aspect': state.videoAspectRatio,
+            'chat-video-aspect': state.videoAspectRatio,
+        };
+        for (const [id, value] of Object.entries(persistedSelects)) {
+            const el = document.getElementById(id);
+            if (el && value) el.value = value;
+        }
+        syncMediaControlValues();
+        state.adultStylesEnabled = Boolean(data.adultStylesEnabled);
+        state.chatStylePreset = data.chatStylePreset ? findImageStylePreset(data.chatStylePreset) : null;
+        state.imagineStylePreset = data.imagineStylePreset ? findImageStylePreset(data.imagineStylePreset) : null;
+        updateToolStrip('chat-tool-strip', 'chatTools');
+        updateToolStrip('code-tool-strip', 'codeTools');
+        updateAgentTeamVisibility();
+        refreshStyleControls();
 
         if (data.chatMessages?.length) {
             state.chatMessages = data.chatMessages;
@@ -2457,10 +4233,21 @@ function restorePersistence() {
 // ── Keyboard Shortcuts ───────────────────────────────────────────────────────
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', e => {
-        // Don't capture when typing in inputs
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-
         const cmd = e.metaKey || e.ctrlKey;
+
+        if (cmd && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            openCommandPalette();
+            return;
+        }
+
+        if (e.key === 'Escape' && document.querySelector('.command-palette-overlay')) {
+            closeCommandPalette();
+            return;
+        }
+
+        // Don't capture other shortcuts when typing in inputs.
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
         // Cmd+1-9 switch tabs
         if (cmd && e.key >= '1' && e.key <= '9') {
@@ -2471,16 +4258,12 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // Cmd+K focus chat input
-        if (cmd && e.key === 'k') {
-            e.preventDefault();
-            switchPanel('chat');
-            document.getElementById('chat-input').focus();
-            return;
-        }
-
         // Escape close artifact panel
         if (e.key === 'Escape') {
+            if (document.querySelector('.code-preview-overlay')) {
+                closeCodePreview();
+                return;
+            }
             if (document.getElementById('artifact-panel').classList.contains('open')) {
                 closeArtifactPanel();
             }
@@ -2505,7 +4288,21 @@ function renderMarkdown(text) {
     });
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
         const id = 'code-' + Math.random().toString(36).slice(2, 8);
-        return `<pre><div class="code-header"><span class="code-lang">${lang || 'code'}</span><button class="code-copy-btn" onclick="copyCodeBlock('${id}')" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div><code id="${id}" class="language-${lang}">${code.trim()}</code></pre>`;
+        const trimmed = code.trim();
+        const lineCount = trimmed.split('\n').length;
+        const isCollapsible = lineCount > 15;
+        const lowerLang = (lang || '').toLowerCase();
+        const isHtml = lowerLang === 'html' && (
+            trimmed.includes('&lt;!DOCTYPE') || trimmed.includes('&lt;!doctype') ||
+            trimmed.includes('&lt;html') || trimmed.includes('&lt;body') ||
+            (trimmed.includes('&lt;div') && trimmed.includes('&lt;style'))
+        );
+        const previewBtn = isHtml ? `<button class="code-action-btn preview-btn" onclick="previewCodeBlock('${id}')" title="Preview HTML"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Preview</button>` : '';
+        const saveBtn = isHtml ? `<button class="code-action-btn save-btn" onclick="saveCodeBlockAsArtifact('${id}')" title="Save as Artifact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Save</button>` : '';
+        const collapseClass = isCollapsible ? ' code-collapsible collapsed' : '';
+        const toggleBtn = isCollapsible ? `<button class="code-toggle-btn" onclick="toggleCodeBlock(this)">Show full code (${lineCount} lines)</button>` : '';
+        const fadeDiv = isCollapsible ? '<div class="code-fade"></div>' : '';
+        return `<pre${collapseClass ? ` class="${collapseClass.trim()}"` : ''}><div class="code-header"><span class="code-lang">${lang || 'code'}</span><span class="code-line-count">${lineCount} lines</span><div class="code-header-btns"><button class="code-copy-btn" onclick="copyCodeBlock('${id}')" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>${previewBtn}${saveBtn}</div></div><code id="${id}" class="language-${lang}">${trimmed}</code>${fadeDiv}</pre>${toggleBtn}`;
     });
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -2525,12 +4322,6 @@ function renderMarkdown(text) {
     html = `<p>${html}</p>`;
     html = html.replace(/<p><(pre|h[1-3]|ul|ol|table)/g, '<$1');
     html = html.replace(/<\/(pre|h[1-3]|ul|ol|table)><\/p>/g, '</$1>');
-    // Auto-detect /imagine commands in AI responses and make them clickable
-    html = html.replace(/\/(imagine|image)\s+(.+?)(?=<br>|<\/p>|<\/code>|$)/gi, (match, cmd, prompt) => {
-        const cleanPrompt = prompt.replace(/<[^>]+>/g, '').trim();
-        if (!cleanPrompt) return match;
-        return `<button class="btn btn-sm btn-primary" style="margin:4px 0" onclick="quickImagine(\`${cleanPrompt.replace(/`/g,"'").replace(/\\/g,"\\\\")}\`)">🎨 Generate: ${cleanPrompt.slice(0,60)}${cleanPrompt.length>60?'...':''}</button>`;
-    });
     return html;
 }
 
@@ -2541,6 +4332,94 @@ function copyCodeBlock(id) {
         const btn = el.closest('pre').querySelector('.code-copy-btn');
         if (btn) { btn.innerHTML = '✓ Copied'; setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy'; }, 2000); }
     });
+}
+
+function toggleCodeBlock(btn) {
+    let pre = btn.previousElementSibling;
+    while (pre && pre.tagName !== 'PRE') pre = pre.previousElementSibling;
+    if (!pre) return;
+    const isCollapsed = pre.classList.contains('collapsed');
+    if (isCollapsed) {
+        pre.classList.remove('collapsed');
+        btn.textContent = 'Collapse';
+    } else {
+        pre.classList.add('collapsed');
+        const lineCount = pre.querySelector('code').textContent.split('\n').length;
+        btn.textContent = `Show full code (${lineCount} lines)`;
+    }
+}
+
+function previewCodeBlock(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    openCodePreviewOverlay(el.textContent);
+}
+
+function openCodePreviewOverlay(htmlContent) {
+    document.querySelector('.code-preview-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'code-preview-overlay';
+    overlay.innerHTML = `
+        <div class="code-preview-toolbar">
+            <span class="preview-title">Live Preview</span>
+            <button class="btn btn-sm btn-primary" onclick="savePreviewAsArtifact()">Save as Artifact</button>
+            <button class="btn btn-sm btn-secondary" onclick="launchPreviewInNewTab()">Open in Tab</button>
+            <button class="btn btn-sm btn-ghost" onclick="closeCodePreview()" style="font-size:16px;padding:4px 10px">&times;</button>
+        </div>
+        <iframe class="code-preview-iframe" sandbox="allow-scripts allow-modals"></iframe>
+    `;
+    overlay._htmlContent = htmlContent;
+    document.body.appendChild(overlay);
+    overlay.querySelector('iframe').srcdoc = htmlContent;
+}
+
+function closeCodePreview() {
+    document.querySelector('.code-preview-overlay')?.remove();
+}
+
+function launchPreviewInNewTab() {
+    const overlay = document.querySelector('.code-preview-overlay');
+    if (!overlay) return;
+    const w = window.open('', '_blank');
+    w.document.write(overlay._htmlContent);
+    w.document.close();
+}
+
+async function savePreviewAsArtifact() {
+    const overlay = document.querySelector('.code-preview-overlay');
+    if (!overlay || !overlay._htmlContent) return toast('No content to save', 'error');
+    await saveHtmlAsArtifact(overlay._htmlContent);
+}
+
+async function saveCodeBlockAsArtifact(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    await saveHtmlAsArtifact(el.textContent);
+}
+
+async function saveHtmlAsArtifact(htmlContent) {
+    const title = prompt('Artifact title:', 'Untitled');
+    if (!title) return;
+    try {
+        const resp = await fetch('/api/artifacts/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                html: htmlContent,
+                css: '',
+                js: '',
+                model: state.chatModel || '',
+            }),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        toast('Artifact saved!', 'success');
+        loadArtifacts();
+        switchPanel('artifacts');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
 }
 
 function escapeHtml(text) {
@@ -2557,4 +4436,572 @@ function toast(message, type = 'info') {
     el.textContent = message;
     container.appendChild(el);
     setTimeout(() => el.remove(), 4000);
+}
+
+// ── Asset Library (Characters + Styles, ported from dork+ios) ───────────────
+// Persistent character/style refs. Active items auto-attach to Imagine + Video
+// generations. For multi-ref, client-side composite into one image (sidesteps
+// xAI's weak multi-ref handling — both faces preserved as literal pixels).
+const assetLib = {
+    items: [],
+    dataCache: {},      // id -> data URL (cached after first fetch)
+    activeTab: 'character',
+    autoAttach: true,
+};
+
+function assetLibImgUrl(id) { return `/asset-library/${id}`; }
+function assetLibActiveChars() { return assetLib.items.filter(i => i.type === 'character' && i.active); }
+function assetLibActiveStyles() { return assetLib.items.filter(i => i.type === 'style' && i.active); }
+
+async function assetLibFetch() {
+    try {
+        const r = await fetch('/api/asset-library');
+        const d = await r.json();
+        assetLib.items = (d && d.items) || [];
+        // Pre-cache data URLs for active items so generation is fast
+        const actives = assetLib.items.filter(i => i.active);
+        await Promise.all(actives.map(async it => {
+            if (assetLib.dataCache[it.id]) return;
+            try {
+                const r2 = await fetch(`/api/asset-library/dataurl/${it.id}`);
+                const j = await r2.json();
+                if (j && j.data_url) await assetLibCacheDataUrl(it.id, j.data_url);
+            } catch {}
+        }));
+        renderAssetSlotBars();
+        if (document.getElementById('asset-lib-modal')?.classList.contains('open')) renderAssetLibGrid();
+    } catch (err) { console.error('[AssetLib] load:', err); }
+}
+
+async function assetLibResolveDataUrl(id) {
+    if (assetLib.dataCache[id]) return assetLib.dataCache[id];
+    try {
+        const r = await fetch(`/api/asset-library/dataurl/${id}`);
+        const j = await r.json();
+        if (j && j.data_url) return await assetLibCacheDataUrl(id, j.data_url);
+    } catch {}
+    return null;
+}
+
+async function assetLibAdd(name, type, dataUrl, tags) {
+    const small = await assetLibDownscale(dataUrl, 2048);
+    const r = await fetch('/api/asset-library', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type, image: small, tags: tags || '' })
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error((data && data.error) || 'Save failed');
+    // First item of a type becomes active automatically
+    const hasActive = assetLib.items.some(i => i.type === type && i.active);
+    if (!hasActive) {
+        await fetch('/api/asset-library/toggle', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: data.id })
+        });
+    }
+    await assetLibFetch();
+    return data;
+}
+
+async function assetLibToggle(id) {
+    const item = assetLib.items.find(i => i.id === id);
+    if (item) { item.active = !item.active; renderAssetSlotBars(); renderAssetLibGrid(); }
+    if (item?.active && !assetLib.dataCache[id]) {
+        try {
+            const r = await fetch(`/api/asset-library/dataurl/${id}`);
+            const j = await r.json();
+            if (j && j.data_url) await assetLibCacheDataUrl(id, j.data_url);
+        } catch {}
+    }
+    try {
+        await fetch('/api/asset-library/toggle', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        await assetLibFetch();
+    } catch (err) {
+        if (item) item.active = !item.active;
+        renderAssetSlotBars(); renderAssetLibGrid();
+        toast('Toggle failed', 'error');
+    }
+}
+
+async function assetLibDelete(id) {
+    if (!confirm('Delete from library?')) return;
+    assetLib.items = assetLib.items.filter(i => i.id !== id);
+    delete assetLib.dataCache[id];
+    renderAssetSlotBars(); renderAssetLibGrid();
+    try {
+        await fetch('/api/asset-library/delete', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        toast('Deleted', 'success');
+    } catch { toast('Delete failed', 'error'); }
+}
+
+async function assetLibRename(id) {
+    const item = assetLib.items.find(i => i.id === id);
+    if (!item) return;
+    const name = prompt('Rename:', item.name);
+    if (!name || !name.trim()) return;
+    try {
+        await fetch('/api/asset-library/rename', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, name: name.trim() })
+        });
+        await assetLibFetch();
+    } catch { toast('Rename failed', 'error'); }
+}
+
+function assetLibDownscale(dataUrl, maxDim) {
+    return new Promise(resolve => {
+        const normalizedUrl = assetLibDataUrlForSource(dataUrl);
+        const mustConvert = /^data:image\/(webp|gif)/i.test(normalizedUrl);
+        if (!normalizedUrl) return resolve(normalizedUrl);
+        const img = new Image();
+        img.onload = () => {
+            const w = img.naturalWidth, h = img.naturalHeight;
+            if (!mustConvert && w <= maxDim && h <= maxDim && normalizedUrl.length < 2_000_000) return resolve(normalizedUrl);
+            const ratio = Math.min(1, maxDim / Math.max(w, h));
+            const nw = Math.max(1, Math.round(w * ratio));
+            const nh = Math.max(1, Math.round(h * ratio));
+            const c = document.createElement('canvas');
+            c.width = nw; c.height = nh;
+            const cx = c.getContext('2d');
+            cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+            cx.fillStyle = '#ffffff';
+            cx.fillRect(0, 0, nw, nh);
+            cx.drawImage(img, 0, 0, nw, nh);
+            try { resolve(c.toDataURL('image/jpeg', 0.95)); } catch { resolve(dataUrl); }
+        };
+        img.onerror = () => resolve(normalizedUrl);
+        img.src = normalizedUrl;
+    });
+}
+
+function assetLibDataUrlForSource(imageData) {
+    const value = String(imageData || '').trim();
+    if (!value || value.startsWith('data:')) return value;
+    let mime = 'image/png';
+    try {
+        const head = value.slice(0, 64);
+        const padded = head + '='.repeat((4 - (head.length % 4)) % 4);
+        const bin = atob(padded);
+        const byteAt = i => i < bin.length ? bin.charCodeAt(i) : -1;
+        if (byteAt(0) === 0xff && byteAt(1) === 0xd8 && byteAt(2) === 0xff) mime = 'image/jpeg';
+        else if (byteAt(0) === 0x89 && bin.slice(1, 4) === 'PNG') mime = 'image/png';
+        else if (bin.slice(0, 4) === 'RIFF' && bin.slice(8, 12) === 'WEBP') mime = 'image/webp';
+    } catch {}
+    return `data:${mime};base64,${value}`;
+}
+
+async function assetLibCacheDataUrl(id, dataUrl) {
+    const prepared = await assetLibDownscale(assetLibDataUrlForSource(dataUrl), 2048);
+    assetLib.dataCache[id] = prepared;
+    return prepared;
+}
+
+// CLIENT-SIDE COMPOSITE — stitches multiple refs into one canvas image so
+// xAI receives ONE image with all subjects baked in at full fidelity.
+// Bigger cells when fewer refs (preserves face detail). Optional label band
+// drawn under each cell so prompts can reference subjects by name.
+function compositeRefs(dataUrls, opts = {}) {
+    return new Promise((resolve, reject) => {
+        if (!dataUrls || !dataUrls.length) return reject(new Error('No refs'));
+        if (dataUrls.length === 1) return resolve(dataUrls[0]);
+        const labels = opts.labels || [];
+        const maxDim = opts.maxDim || 2048;
+        const loaded = []; let done = 0; let errored = false;
+        dataUrls.forEach((u, i) => {
+            const img = new Image();
+            img.onload = () => { loaded[i] = img; done++; if (done === dataUrls.length && !errored) build(); };
+            img.onerror = () => { errored = true; reject(new Error(`Image ${i} failed to load`)); };
+            img.src = u;
+        });
+        function build() {
+            const n = loaded.length;
+            // Layout: horizontal strip up to 3, then 2x2/3x2/3x3
+            let cols, rows;
+            if (n === 2) { cols = 2; rows = 1; }
+            else if (n === 3) { cols = 3; rows = 1; }
+            else if (n === 4) { cols = 2; rows = 2; }
+            else if (n <= 6) { cols = 3; rows = 2; }
+            else { cols = 3; rows = 3; }
+            // Bigger cells when fewer refs — preserves facial detail
+            let cell = n <= 2 ? 1024 : (n <= 4 ? 768 : 512);
+            const labelBand = () => labels.length ? Math.round(cell * 0.08) : 0;
+            let totalW = cols * cell;
+            let totalH = rows * (cell + labelBand());
+            if (totalW > maxDim || totalH > maxDim) {
+                const s = Math.min(maxDim / totalW, maxDim / totalH);
+                cell = Math.floor(cell * s);
+                totalW = cols * cell;
+                totalH = rows * (cell + labelBand());
+            }
+            const lb = labelBand();
+            const c = document.createElement('canvas');
+            c.width = totalW; c.height = totalH;
+            const cx = c.getContext('2d');
+            cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+            cx.fillStyle = '#0a0a0a';
+            cx.fillRect(0, 0, totalW, totalH);
+            for (let i = 0; i < n; i++) {
+                const col = i % cols, row = Math.floor(i / cols);
+                const cellX = col * cell;
+                const cellY = row * (cell + lb);
+                const im = loaded[i];
+                const iw = im.naturalWidth, ih = im.naturalHeight;
+                const ratio = Math.min(cell / iw, cell / ih);
+                const dw = Math.round(iw * ratio), dh = Math.round(ih * ratio);
+                const dx = cellX + Math.round((cell - dw) / 2);
+                const dy = cellY + Math.round((cell - dh) / 2);
+                cx.drawImage(im, dx, dy, dw, dh);
+                if (labels[i] && lb > 0) {
+                    cx.fillStyle = '#ffffff';
+                    cx.fillRect(cellX, cellY + cell, cell, lb);
+                    cx.fillStyle = '#000000';
+                    cx.font = `bold ${Math.round(lb * 0.55)}px sans-serif`;
+                    cx.textAlign = 'center';
+                    cx.textBaseline = 'middle';
+                    cx.fillText(String(labels[i]).slice(0, 24), cellX + cell / 2, cellY + cell + lb / 2);
+                }
+            }
+            try { resolve(c.toDataURL('image/jpeg', 0.92)); } catch (e) { reject(e); }
+        }
+    });
+}
+
+// Build effective source image. Returns { image, labels, count } where:
+//   image:  base64 (no data URI prefix), or null if nothing to attach
+//   labels: array of labels in the same order as the composite cells (empty for single-ref)
+//   count:  total subject count contributing to the composite
+async function assetLibBuildEffectiveSource(userSourceB64) {
+    if (!assetLib.autoAttach) return { image: userSourceB64 || null, labels: [], count: userSourceB64 ? 1 : 0 };
+    const refs = [];  // {dataUrl, label}
+    if (userSourceB64) refs.push({ dataUrl: assetLibDataUrlForSource(userSourceB64), label: 'ATTACHED' });
+    for (const c of assetLibActiveChars()) {
+        const u = await assetLibResolveDataUrl(c.id);
+        if (u) refs.push({ dataUrl: u, label: (c.name || 'CHAR').toUpperCase() });
+    }
+    for (const s of assetLibActiveStyles()) {
+        const u = await assetLibResolveDataUrl(s.id);
+        if (u) refs.push({ dataUrl: u, label: 'STYLE: ' + (s.name || '').toUpperCase() });
+    }
+    if (!refs.length) return { image: null, labels: [], count: 0 };
+    if (refs.length === 1) {
+        const u = refs[0].dataUrl;
+        const b64 = u.startsWith('data:') && u.includes(',') ? u.split(',', 2)[1] : u;
+        return { image: b64, labels: [], count: 1 };
+    }
+    const composited = await compositeRefs(refs.map(r => r.dataUrl), { labels: refs.map(r => r.label) });
+    return { image: composited.split(',', 2)[1], labels: refs.map(r => r.label), count: refs.length };
+}
+
+// ── Slot Bar UI (rendered above Imagine + Video controls) ─────────────────
+function ensureAssetSlotBar(panelId) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return null;
+    let bar = panel.querySelector('.asset-slot-bar');
+    if (bar) return bar;
+    bar = document.createElement('div');
+    bar.className = 'asset-slot-bar';
+    bar.dataset.panel = panelId;
+    const layout = panel.querySelector('.split-layout');
+    const controls = panel.querySelector('.split-controls');
+    if (controls) controls.insertBefore(bar, controls.firstChild);
+    else if (layout) layout.insertBefore(bar, layout.firstChild);
+    else panel.appendChild(bar);
+    return bar;
+}
+
+function renderAssetSlotBars() {
+    ['panel-imagine', 'panel-video'].forEach(panelId => {
+        const bar = ensureAssetSlotBar(panelId);
+        if (!bar) return;
+        const chars = assetLibActiveChars();
+        const styles = assetLibActiveStyles();
+        const html = [];
+        html.push('<div class="asset-slot-label">Cast</div>');
+        chars.forEach(c => {
+            html.push(`<button class="asset-slot char on" type="button" data-id="${c.id}" title="${escapeHtml(c.name)}">
+                <span class="asset-slot-tag">CHAR</span>
+                <img src="${assetLibImgUrl(c.id)}" alt="">
+                <span class="asset-slot-name">${escapeHtml(c.name)}</span>
+                <span class="asset-slot-clear" data-id="${c.id}">&times;</span>
+            </button>`);
+        });
+        styles.forEach(s => {
+            html.push(`<button class="asset-slot style on" type="button" data-id="${s.id}" title="${escapeHtml(s.name)}">
+                <span class="asset-slot-tag">STYLE</span>
+                <img src="${assetLibImgUrl(s.id)}" alt="">
+                <span class="asset-slot-name">${escapeHtml(s.name)}</span>
+                <span class="asset-slot-clear" data-id="${s.id}">&times;</span>
+            </button>`);
+        });
+        html.push(`<button class="asset-slot-add" type="button" data-tab="character">+ Char</button>`);
+        html.push(`<button class="asset-slot-add" type="button" data-tab="style">+ Style</button>`);
+        if (assetLib.items.length) {
+            html.push(`<button class="asset-slot-count" type="button">${assetLib.items.length} saved</button>`);
+        }
+        bar.innerHTML = html.join('');
+        // Wire events
+        bar.querySelectorAll('.asset-slot-clear').forEach(el => el.addEventListener('click', e => {
+            e.stopPropagation();
+            assetLibToggle(el.dataset.id);
+        }));
+        bar.querySelectorAll('.asset-slot.on').forEach(el => el.addEventListener('click', e => {
+            if (e.target.classList.contains('asset-slot-clear')) return;
+            const isChar = el.classList.contains('char');
+            openAssetLibModal(isChar ? 'character' : 'style');
+        }));
+        bar.querySelectorAll('.asset-slot-add').forEach(el => el.addEventListener('click', () => {
+            openAssetLibModal(el.dataset.tab);
+        }));
+        bar.querySelector('.asset-slot-count')?.addEventListener('click', () => openAssetLibModal(assetLib.activeTab));
+    });
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+function ensureAssetLibModal() {
+    let modal = document.getElementById('asset-lib-modal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'asset-lib-modal';
+    modal.className = 'asset-lib-modal';
+    modal.innerHTML = `
+        <div class="asset-lib-panel">
+            <div class="asset-lib-hdr">
+                <div class="asset-lib-title">Cast Library</div>
+                <div class="asset-lib-tabs">
+                    <button class="asset-lib-tab on" data-t="character" type="button">Characters</button>
+                    <button class="asset-lib-tab" data-t="style" type="button">Styles</button>
+                </div>
+                <button class="asset-lib-close" type="button">&times;</button>
+            </div>
+            <div class="asset-lib-toolbar">
+                <button class="asset-lib-add-btn" type="button">+ Upload to Library</button>
+                <span class="asset-lib-hint">Active items auto-attach to Imagine &amp; Video. Multi-ref auto-composites.</span>
+            </div>
+            <div class="asset-lib-grid" id="asset-lib-grid"></div>
+            <input type="file" id="asset-lib-file" accept="image/png,image/jpeg,image/webp" style="display:none">
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeAssetLibModal(); });
+    modal.querySelector('.asset-lib-close').addEventListener('click', closeAssetLibModal);
+    modal.querySelectorAll('.asset-lib-tab').forEach(t => t.addEventListener('click', () => {
+        assetLib.activeTab = t.dataset.t;
+        modal.querySelectorAll('.asset-lib-tab').forEach(x => x.classList.toggle('on', x === t));
+        renderAssetLibGrid();
+    }));
+    modal.querySelector('.asset-lib-add-btn').addEventListener('click', () => {
+        modal.querySelector('#asset-lib-file').click();
+    });
+    modal.querySelector('#asset-lib-file').addEventListener('change', async (e) => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        const fr = new FileReader();
+        fr.onload = async ev => {
+            const dataUrl = ev.target.result;
+            setTimeout(async () => {
+                const name = prompt(`Name this ${assetLib.activeTab}:`);
+                if (!name || !name.trim()) return;
+                const tags = prompt('Tags (optional):', '') || '';
+                try {
+                    await assetLibAdd(name.trim(), assetLib.activeTab, dataUrl, tags);
+                    toast(`Saved '${name.trim()}'`, 'success');
+                } catch (err) { toast(err.message || 'Save failed', 'error'); }
+            }, 50);
+        };
+        fr.readAsDataURL(f);
+    });
+    return modal;
+}
+
+function openAssetLibModal(tab) {
+    if (tab) assetLib.activeTab = tab;
+    const modal = ensureAssetLibModal();
+    modal.querySelectorAll('.asset-lib-tab').forEach(t =>
+        t.classList.toggle('on', t.dataset.t === assetLib.activeTab));
+    modal.classList.add('open');
+    renderAssetLibGrid();
+}
+
+function closeAssetLibModal() {
+    const modal = document.getElementById('asset-lib-modal');
+    if (modal) modal.classList.remove('open');
+}
+
+function renderAssetLibGrid() {
+    const grid = document.getElementById('asset-lib-grid');
+    if (!grid) return;
+    const items = assetLib.items.filter(i => i.type === assetLib.activeTab);
+    if (!items.length) {
+        grid.innerHTML = `<div class="asset-lib-empty">No ${assetLib.activeTab}s yet.<br>Upload an image, or save from any generated result.</div>`;
+        return;
+    }
+    grid.innerHTML = items.map(it => `
+        <div class="asset-lib-card ${it.active ? 'active' : ''}" data-id="${it.id}">
+            <img src="${assetLibImgUrl(it.id)}" loading="lazy">
+            <div class="asset-lib-card-info">
+                <div class="asset-lib-card-name">${escapeHtml(it.name)}</div>
+                ${it.tags ? `<div class="asset-lib-card-tags">${escapeHtml(it.tags)}</div>` : ''}
+            </div>
+            <div class="asset-lib-card-actions">
+                <button class="asset-lib-card-btn use" type="button">${it.active ? '✓ Active' : 'Use'}</button>
+                <button class="asset-lib-card-btn rename" type="button">Rename</button>
+                <button class="asset-lib-card-btn del" type="button">×</button>
+            </div>
+        </div>`).join('');
+    grid.querySelectorAll('.asset-lib-card').forEach(card => {
+        const id = card.dataset.id;
+        card.querySelector('img').addEventListener('click', () => assetLibToggle(id));
+        card.querySelector('.use').addEventListener('click', e => { e.stopPropagation(); assetLibToggle(id); });
+        card.querySelector('.rename').addEventListener('click', e => { e.stopPropagation(); assetLibRename(id); });
+        card.querySelector('.del').addEventListener('click', e => { e.stopPropagation(); assetLibDelete(id); });
+    });
+}
+
+// Save a generated image URL to the asset library
+async function saveImageToAssetLib(imgUrl, type) {
+    try {
+        const r = await fetch(imgUrl);
+        if (!r.ok) throw new Error(`Fetch ${r.status}`);
+        const blob = await r.blob();
+        const dataUrl = await new Promise((res, rej) => {
+            const fr = new FileReader();
+            fr.onload = ev => res(ev.target.result);
+            fr.onerror = () => rej(new Error('Read failed'));
+            fr.readAsDataURL(blob);
+        });
+        const name = prompt(`Save as ${type}:`);
+        if (!name || !name.trim()) return;
+        const tags = prompt('Tags (optional):', '') || '';
+        await assetLibAdd(name.trim(), type, dataUrl, tags);
+        toast(`Saved '${name.trim()}' as ${type}`, 'success');
+    } catch (err) { toast(err.message || 'Save failed', 'error'); }
+}
+window.saveImageToAssetLib = saveImageToAssetLib;
+window.openAssetLibModal = openAssetLibModal;
+
+// ── Global fetch wrapper: inject library refs into ALL gen calls ──────────
+// One interception point covers Chat slash commands, AI action tags,
+// Imagine tab, Video tab, and any future call site. When active library refs
+// exist, we composite (existing payload.image + char refs + style refs) into
+// a single image and route to the edit endpoint. The composite trick keeps
+// xAI on its strong single-ref path, with all subjects baked in pixels.
+const ASSET_LIB_GEN_PATHS = {
+    '/api/image/generate': { kind: 'image', editPath: '/api/image/edit' },
+    '/api/image/edit':     { kind: 'image', editPath: '/api/image/edit' },
+    '/api/video/generate': { kind: 'video', editPath: '/api/video/generate' },
+};
+
+function _assetLibMatchPath(input) {
+    let url = '';
+    if (typeof input === 'string') url = input;
+    else if (input instanceof Request) url = input.url;
+    else if (input && input.url) url = input.url;
+    try {
+        const u = new URL(url, window.location.origin);
+        return ASSET_LIB_GEN_PATHS[u.pathname] ? { pathname: u.pathname, ...ASSET_LIB_GEN_PATHS[u.pathname] } : null;
+    } catch { return null; }
+}
+
+async function _assetLibTransformPayload(payload, hit) {
+    const hasActive = assetLibActiveChars().length + assetLibActiveStyles().length > 0;
+    if (!assetLib.autoAttach || !hasActive) return { payload, endpoint: null };
+    const userSource = (payload && payload.image) || null;
+    const result = await assetLibBuildEffectiveSource(userSource);
+    if (!result.image) return { payload, endpoint: null };
+    const out = { ...payload, image: result.image };
+    let newEndpoint = null;
+    if (hit.kind === 'image' && hit.pathname === '/api/image/generate') {
+        newEndpoint = '/api/image/edit';
+    }
+    // Strip any existing "Preserve EXACT face..." prefix added by chat slash commands
+    // so we don't compound conflicting instructions when we have a multi-subject composite.
+    let basePrompt = out.prompt || '';
+    const preservePrefix = /^Preserve the EXACT face[\s\S]*?Place them in a new scene:\s*/i;
+    if (preservePrefix.test(basePrompt)) basePrompt = basePrompt.replace(preservePrefix, '');
+    // Augment prompt whenever the result is a true composite (2+ subjects)
+    if (hit.kind === 'image' && result.count >= 2) {
+        const charLabels = assetLibActiveChars().map(c => (c.name || 'CHAR').toUpperCase());
+        const subjects = (userSource ? ['the ATTACHED subject'] : []).concat(charLabels);
+        if (subjects.length >= 3) {
+            out.prompt = `The source image is a labeled grid of ${subjects.length} reference subjects (${subjects.join(', ')}). Recreate ALL ${subjects.length} subjects together in a single new scene with their EXACT faces, features, hair, and clothing preserved. Scene: ${basePrompt}`;
+        } else if (subjects.length === 2) {
+            out.prompt = `The source image shows two reference subjects (${subjects[0]} and ${subjects[1]}). Recreate BOTH together in a single new scene with their EXACT faces, features, hair, and clothing preserved. Scene: ${basePrompt}`;
+        } else if (!userSource) {
+            // pure style-only composite (no chars, multiple styles) — uncommon
+            out.prompt = `Apply the visual styles shown in the source image to: ${basePrompt}`;
+        }
+    } else if (hit.kind === 'image' && result.count === 1 && !userSource && basePrompt) {
+        // Single library ref, no user attachment — gentle nudge
+        out.prompt = `Using the subject shown in the source image with their EXACT face and features preserved: ${basePrompt}`;
+    }
+    return { payload: out, endpoint: newEndpoint };
+}
+
+const _assetLibOrigFetch = window.fetch.bind(window);
+window.fetch = async function(input, init) {
+    try {
+        const hit = _assetLibMatchPath(input);
+        if (!hit) return _assetLibOrigFetch(input, init);
+        // Only intercept POSTs with JSON body
+        const method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+        if (method !== 'POST') return _assetLibOrigFetch(input, init);
+        const bodyStr = init && typeof init.body === 'string' ? init.body : null;
+        if (!bodyStr) return _assetLibOrigFetch(input, init);
+        let payload;
+        try { payload = JSON.parse(bodyStr); } catch { return _assetLibOrigFetch(input, init); }
+        const { payload: newPayload, endpoint: newEndpoint } = await _assetLibTransformPayload(payload, hit);
+        if (newPayload === payload && !newEndpoint) return _assetLibOrigFetch(input, init);
+        const newInit = { ...init, body: JSON.stringify(newPayload) };
+        const newInput = newEndpoint ? newEndpoint : input;
+        return _assetLibOrigFetch(newInput, newInit);
+    } catch (err) {
+        console.error('[AssetLib] fetch wrapper:', err);
+        return _assetLibOrigFetch(input, init);
+    }
+};
+
+// Inject "Save as Char/Style" buttons whenever the imagine preview re-renders
+function _assetLibInjectImagineSaveButtons() {
+    const preview = document.getElementById('imagine-preview');
+    if (!preview) return;
+    const actions = preview.querySelector('.image-actions');
+    if (!actions || actions.querySelector('.asset-save-char')) return;
+    const img = preview.querySelector('img');
+    if (!img || !img.src) return;
+    const url = img.src;
+    const charBtn = document.createElement('button');
+    charBtn.className = 'btn btn-sm btn-ghost asset-save-char';
+    charBtn.title = 'Save as Character (auto-attach to future gens)';
+    charBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="margin-left:4px;font-size:10px">Char</span>';
+    charBtn.onclick = (e) => { e.stopPropagation(); saveImageToAssetLib(url, 'character'); };
+    const styleBtn = document.createElement('button');
+    styleBtn.className = 'btn btn-sm btn-ghost asset-save-style';
+    styleBtn.title = 'Save as Style (auto-attach to future gens)';
+    styleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg><span style="margin-left:4px;font-size:10px">Style</span>';
+    styleBtn.onclick = (e) => { e.stopPropagation(); saveImageToAssetLib(url, 'style'); };
+    actions.appendChild(charBtn);
+    actions.appendChild(styleBtn);
+}
+
+function _assetLibBootstrap() {
+    assetLibFetch();
+    // Watch imagine preview for re-renders → inject save buttons
+    const preview = document.getElementById('imagine-preview');
+    if (preview) {
+        const obs = new MutationObserver(() => _assetLibInjectImagineSaveButtons());
+        obs.observe(preview, { childList: true, subtree: true });
+        _assetLibInjectImagineSaveButtons();
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _assetLibBootstrap);
+} else {
+    _assetLibBootstrap();
 }

@@ -121,6 +121,19 @@
                     <option value="gpt-4o-mini">GPT-4o Mini</option>
                 </select>
             </div>
+            <div class="tool-strip" id="chat-tool-strip">
+                <button class="tool-chip" data-tool="web_search" title="Use xAI Web Search">Web</button>
+                <button class="tool-chip" data-tool="x_search" title="Use xAI X Search">X</button>
+                <button class="tool-chip" data-tool="code_execution" title="Use xAI Code Execution">Code</button>
+                <button class="tool-chip" data-tool="collections_search" title="Use xAI Collections Search">Files</button>
+                <span id="early-access-status" class="tool-chip-status">Early access models appear when your API key exposes them.</span>
+            </div>
+            <div class="agent-team-strip" id="agent-team-strip" style="display:none">
+                <span class="agent-team-label">Multi-Agent Research</span>
+                <button class="agent-pill active" data-agent-effort="low" title="4-agent setup">4 agents</button>
+                <button class="agent-pill" data-agent-effort="high" title="16-agent setup">16 agents</button>
+                <span class="agent-team-note">Server-orchestrated by Grok</span>
+            </div>
             <div class="chat-container">
                 <div id="chat-messages" class="chat-messages">
                     <div class="welcome">
@@ -157,8 +170,8 @@
                         <h2>DORK+</h2>
                         <p>Chat, create, code, imagine, and build — powered by xAI + OpenAI.</p>
                         <div class="shortcuts-hint">
-                            <span><kbd>&#8984;K</kbd> Focus</span>
-                            <span><kbd>&#8984;1-8</kbd> Tabs</span>
+                            <span><kbd>&#8984;K</kbd> Commands</span>
+                            <span><kbd>&#8984;1-9</kbd> Tabs</span>
                             <span><kbd>Esc</kbd> Close</span>
                         </div>
                         <div class="shortcuts-hint" style="margin-top:4px">
@@ -176,11 +189,83 @@
                         </button>
                         <input type="file" id="chat-file-input" multiple accept="image/*,.txt,.md,.py,.js,.ts,.jsx,.tsx,.json,.csv,.html,.css,.xml,.yaml,.yml,.toml,.sh,.sql,.rs,.go,.java,.c,.cpp,.h,.rb,.php,.swift,.kt" style="display:none">
                         <textarea id="chat-input" class="chat-input" placeholder="Ask anything... /imagine /video /code" rows="1"></textarea>
+                        <button id="chat-mic" class="mic-btn" title="Live voice mode" onclick="toggleChatVoice()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                        </button>
                         <button id="chat-send" class="send-btn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                         </button>
                     </div>
+                    <div id="chat-voice-bar" class="chat-voice-bar" style="display:none">
+                        <div class="chat-voice-indicator">
+                            <div class="voice-pulse" id="chat-voice-pulse"></div>
+                            <span id="chat-voice-status">Connecting...</span>
+                        </div>
+                        <input type="text" id="chat-voice-persona" class="voice-persona-input" placeholder="Personality / tone / scene..." title="Voice personality instructions">
+                        <select id="chat-voice-select" class="model-select" style="width:auto;min-width:90px">
+                            <option value="Eve" selected>Eve</option>
+                            <option value="Ara">Ara</option>
+                            <option value="Rex">Rex</option>
+                            <option value="Sal">Sal</option>
+                            <option value="Leo">Leo</option>
+                        </select>
+                        <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="stopChatVoice()">End</button>
+                    </div>
+                    <div class="chat-style-bar">
+                        <span class="chat-style-label">Image</span>
+                        <select id="chat-image-model" class="model-select media-model-select">
+                            <option value="grok-imagine-image-quality" selected>Quality - $0.05</option>
+                            <option value="grok-imagine-image">Base - $0.02</option>
+                            <option value="gpt-image-1">ChatGPT Image</option>
+                        </select>
+                        <select id="chat-image-resolution" class="model-select media-tiny-select">
+                            <option value="1k">1K</option>
+                            <option value="2k" selected>2K</option>
+                        </select>
+                        <select id="chat-image-aspect" class="model-select media-tiny-select">
+                            <option value="auto" selected>Auto</option>
+                            <option value="1:1">1:1</option>
+                            <option value="16:9">16:9</option>
+                            <option value="9:16">9:16</option>
+                            <option value="4:3">4:3</option>
+                            <option value="3:4">3:4</option>
+                        </select>
+                        <select id="chat-image-strength" class="model-select media-tiny-select">
+                            <option value="raw">Raw</option>
+                            <option value="clean" selected>Clean</option>
+                            <option value="bold">Bold</option>
+                            <option value="max">Max</option>
+                        </select>
+                        <span class="chat-style-label">Image Style</span>
+                        <select id="chat-style-select" class="model-select"></select>
+                        <button id="chat-style-random" class="mini-action" type="button">Random</button>
+                        <button id="chat-style-clear" class="mini-action" type="button">Clear</button>
+                    </div>
+                    <div class="chat-style-bar chat-media-bar">
+                        <span class="chat-style-label">Video</span>
+                        <select id="chat-video-model" class="model-select media-model-select">
+                            <option value="grok-imagine-video" selected>Grok Imagine Video</option>
+                        </select>
+                        <select id="chat-video-duration" class="model-select media-tiny-select">
+                            <option value="5">5s</option>
+                            <option value="8" selected>8s</option>
+                            <option value="10">10s</option>
+                            <option value="15">15s</option>
+                        </select>
+                        <select id="chat-video-resolution" class="model-select media-tiny-select">
+                            <option value="480p">480p</option>
+                            <option value="720p" selected>720p</option>
+                        </select>
+                        <select id="chat-video-aspect" class="model-select media-tiny-select">
+                            <option value="16:9" selected>16:9</option>
+                            <option value="9:16">9:16</option>
+                            <option value="1:1">1:1</option>
+                            <option value="4:3">4:3</option>
+                            <option value="3:4">3:4</option>
+                        </select>
+                    </div>
                     <div class="chat-controls">
+                        <button class="chat-control-btn" id="command-palette-btn">Commands</button>
                         <button id="chat-system" class="chat-control-btn">System Prompt</button>
                         <button id="chat-clear" class="chat-control-btn">Clear</button>
                     </div>
@@ -194,8 +279,8 @@
                 <div class="panel-title">Imagine</div>
                 <div class="header-spacer"></div>
                 <select id="imagine-model" class="model-select">
+                    <option value="grok-imagine-image-quality" selected>Imagine Quality — $0.05</option>
                     <option value="grok-imagine-image">Imagine — $0.02</option>
-                    <option value="grok-imagine-image-pro">Imagine Pro — $0.07</option>
                     <option value="gpt-image-1.5">ChatGPT Image 1.5</option>
                     <option value="gpt-image-1">ChatGPT Image 1</option>
                     <option value="gpt-image-1-mini">ChatGPT Image Mini</option>
@@ -204,8 +289,65 @@
             <div class="split-layout">
                 <div class="split-controls">
                     <div class="field-group">
-                        <label>Prompt</label>
+                        <div class="field-header">
+                            <label>Prompt</label>
+                            <button id="imagine-polish" class="mini-action" type="button">Polish</button>
+                        </div>
                         <textarea id="imagine-prompt" class="voice-textarea" style="min-height:90px" placeholder="Describe the image..."></textarea>
+                    </div>
+                    <div class="field-group">
+                        <div class="field-header">
+                            <label>Style Presets</label>
+                            <div class="field-header-actions">
+                                <button id="style-random" class="mini-action" type="button">Random</button>
+                                <button id="style-clear" class="mini-action" type="button">Clear</button>
+                            </div>
+                        </div>
+                        <div id="image-style-presets" class="style-preset-grid"></div>
+                        <div id="style-preset-active" class="style-preset-active">No style preset selected</div>
+                    </div>
+                    <div class="field-row imagine-control-row">
+                        <div class="field-group">
+                            <label>Variants</label>
+                            <select id="imagine-count" class="model-select">
+                                <option value="1">1 image</option>
+                                <option value="2">2 images</option>
+                                <option value="4">4 images</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Resolution</label>
+                            <select id="imagine-resolution" class="model-select">
+                                <option value="1k">1K</option>
+                                <option value="2k" selected>2K</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Aspect</label>
+                            <select id="imagine-aspect" class="model-select">
+                                <option value="auto" selected>Auto</option>
+                                <option value="1:1">1:1</option>
+                                <option value="16:9">16:9</option>
+                                <option value="9:16">9:16</option>
+                                <option value="4:3">4:3</option>
+                                <option value="3:4">3:4</option>
+                                <option value="3:2">3:2</option>
+                                <option value="2:3">2:3</option>
+                                <option value="2:1">2:1</option>
+                                <option value="1:2">1:2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field-row imagine-control-row">
+                        <div class="field-group">
+                            <label>Style Strength</label>
+                            <select id="imagine-intensity" class="model-select">
+                                <option value="raw">Raw</option>
+                                <option value="clean" selected>Clean</option>
+                                <option value="bold">Bold</option>
+                                <option value="max">Max</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="field-group">
                         <label>Source Image (optional)</label>
@@ -214,9 +356,20 @@
                             <p>Drop image or click to upload</p>
                             <div class="hint">For image-to-image editing</div>
                         </div>
-                        <input type="file" id="imagine-file" accept="image/*" style="display:none">
+                        <input type="file" id="imagine-file" accept="image/png,image/jpeg,image/webp" style="display:none">
                     </div>
                     <button id="imagine-generate" class="btn btn-primary btn-full btn-lg">Generate</button>
+                    <div class="field-group" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+                        <label>Fuse Images</label>
+                        <div id="imagine-fuse-preview" class="fuse-preview"></div>
+                        <div id="imagine-fuse-drop" class="drop-zone" style="padding:14px">
+                            <p>Drop/click to add images to fuse</p>
+                            <div class="hint">Upload or pick from gallery below</div>
+                        </div>
+                        <input type="file" id="imagine-fuse-file" accept="image/png,image/jpeg,image/webp" multiple style="display:none">
+                        <input type="text" id="imagine-fuse-prompt" class="voice-persona-input" style="margin-top:4px;padding:8px 10px;font-size:13px" placeholder="Optional: fusion style direction...">
+                        <button id="imagine-fuse-btn" class="btn btn-primary btn-full" disabled>Fuse 2 Images</button>
+                    </div>
                 </div>
                 <div class="split-canvas">
                     <div id="imagine-preview" class="split-preview">
@@ -225,7 +378,10 @@
                             <p>Generated images appear here</p>
                         </div>
                     </div>
-                    <div id="imagine-gallery" class="split-gallery"></div>
+                    <div class="gallery-wrapper">
+                        <div id="imagine-gallery" class="split-gallery"></div>
+                        <div id="imagine-gallery-actions"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,8 +390,11 @@
         <div id="panel-video" class="panel">
             <div class="panel-header">
                 <div class="panel-title">Video</div>
-                <span class="panel-subtitle">grok-imagine-video — $0.05/s</span>
+                <span class="panel-subtitle" id="video-pricing">grok-imagine-video — $0.05/s</span>
                 <div class="header-spacer"></div>
+                <select id="video-model" class="model-select">
+                    <option value="grok-imagine-video" selected>Grok Imagine Video</option>
+                </select>
                 <div id="video-status"></div>
             </div>
             <div class="split-layout">
@@ -256,6 +415,36 @@
                     <div class="field-group">
                         <label>Prompt</label>
                         <textarea id="video-prompt" class="voice-textarea" style="min-height:90px" placeholder="Describe the video..."></textarea>
+                    </div>
+                    <div class="field-row imagine-control-row">
+                        <div class="field-group">
+                            <label>Duration</label>
+                            <select id="video-duration" class="model-select">
+                                <option value="5">5s</option>
+                                <option value="8" selected>8s</option>
+                                <option value="10">10s</option>
+                                <option value="15">15s</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Resolution</label>
+                            <select id="video-resolution" class="model-select">
+                                <option value="480p">480p</option>
+                                <option value="720p" selected>720p</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Aspect</label>
+                            <select id="video-aspect" class="model-select">
+                                <option value="16:9" selected>16:9</option>
+                                <option value="9:16">9:16</option>
+                                <option value="1:1">1:1</option>
+                                <option value="4:3">4:3</option>
+                                <option value="3:4">3:4</option>
+                                <option value="3:2">3:2</option>
+                                <option value="2:3">2:3</option>
+                            </select>
+                        </div>
                     </div>
                     <button id="video-generate" class="btn btn-primary btn-full btn-lg">Generate Video</button>
                 </div>
@@ -407,6 +596,12 @@
                 </select>
                 <button id="code-clear" class="btn btn-ghost btn-sm">Clear</button>
             </div>
+            <div class="tool-strip" id="code-tool-strip">
+                <button class="tool-chip active" data-tool="code_execution" title="Use xAI Code Execution">Code</button>
+                <button class="tool-chip" data-tool="web_search" title="Use xAI Web Search">Web</button>
+                <button class="tool-chip" data-tool="x_search" title="Use xAI X Search">X</button>
+                <button class="tool-chip" data-tool="collections_search" title="Use xAI Collections Search">Files</button>
+            </div>
             <div class="code-layout">
                 <div class="code-editor-area">
                     <textarea id="code-editor" class="code-editor" placeholder="Paste code here for context (optional)..."></textarea>
@@ -523,23 +718,34 @@
                 </div>
                 <div class="divider"></div>
                 <div class="settings-section" style="margin-top:20px">
+                    <div class="settings-title">Adult Image Styles</div>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="adult-styles-toggle">
+                        <span>Enable adult style presets</span>
+                    </label>
+                    <div class="settings-subtitle">Adds adult-only fetish, kink, latex, bondage, club, and boudoir presets to Chat and Imagine.</div>
+                </div>
+                <div class="divider"></div>
+                <div class="settings-section" style="margin-top:20px">
                     <div class="settings-title">Models</div>
+                    <div id="model-discovery-note" style="margin-top:8px;font-size:11px;color:var(--text-dim)">Loading model registry...</div>
                     <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:12.5px;color:var(--text-secondary)">
+                        <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-early-access">beta</span> Grok 4.3 Beta — shown automatically when available to your xAI API key</div>
                         <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-fast">fast</span> Grok 4.20 — 2M ctx</div>
                         <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-reasoning">reason</span> Grok 4.20 Reasoning — 2M ctx</div>
                         <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-multi-agent">agent</span> Grok 4.20 Multi-Agent — 2M ctx</div>
                         <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-code">code</span> Grok Code Fast — 256K ctx</div>
                         <div style="display:flex;align-items:center;gap:6px"><span class="tag tag-fast">fast</span> Grok 4.1 Fast — $0.20/$0.50</div>
                         <div class="divider" style="margin:6px 0"></div>
-                        <div>Grok Imagine ($0.02) &amp; Pro ($0.07) &bull; ChatGPT Image (~$0.04) &bull; Video ($0.05/s) &bull; TTS ($4.20/1M chars) &bull; Realtime ($0.05/min)</div>
+                        <div>Grok Imagine ($0.02) &amp; Quality ($0.05) &bull; ChatGPT Image (~$0.04) &bull; Video ($0.05/s) &bull; TTS ($4.20/1M chars) &bull; Realtime ($0.05/min)</div>
                     </div>
                 </div>
                 <div class="divider"></div>
                 <div class="settings-section" style="margin-top:20px">
                     <div class="settings-title">Keyboard Shortcuts</div>
                     <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;color:var(--text-secondary);margin-top:10px">
-                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">&#8984;1-8</kbd> <span>Switch tabs</span>
-                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">&#8984;K</kbd> <span>Focus chat</span>
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">&#8984;1-9</kbd> <span>Switch tabs</span>
+                        <kbd style="font-family:var(--font-mono);color:var(--text-muted)">&#8984;K</kbd> <span>Command palette</span>
                         <kbd style="font-family:var(--font-mono);color:var(--text-muted)">Esc</kbd> <span>Close panel/modal</span>
                         <kbd style="font-family:var(--font-mono);color:var(--text-muted)">Enter</kbd> <span>Send message</span>
                         <kbd style="font-family:var(--font-mono);color:var(--text-muted)">Ctrl+Enter</kbd> <span>Speak (TTS)</span>
@@ -566,7 +772,7 @@
               <button class="btn btn-sm btn-secondary" onclick="launchArtifact()">Launch</button>
               <button class="btn btn-sm btn-ghost" onclick="closeArtifactPanel()">Close</button>
           </div>
-          <iframe id="artifact-frame" class="artifact-frame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+          <iframe id="artifact-frame" class="artifact-frame" sandbox="allow-scripts allow-modals"></iframe>
       </div>
     </main>
 </div>
